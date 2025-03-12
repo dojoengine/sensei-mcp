@@ -170,9 +170,10 @@ export function registerPrompt(
   metadata: PromptMetadata,
 ): void {
   // Create a prompt handler that accepts the required arguments
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const promptHandler = (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _args: undefined,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _extra: Record<string, unknown>,
   ): GetPromptResult => ({
     messages: [
@@ -213,9 +214,9 @@ export function registerPrompt(
     }
 
     // Create tool handler that replaces variables and returns the result
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const toolHandler = async (
       inputs: Record<string, string>,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       _extra: Record<string, unknown>,
     ): Promise<CallToolResult> => {
       const span = Logger.span('toolExecution', { tool: toolName });
