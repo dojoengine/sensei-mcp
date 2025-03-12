@@ -1,0 +1,73 @@
+This is the tool you would use to get a basic understanding of Dojo.
+When building a Dojo game, follow this essential workflow:
+
+1. Project Setup
+   - Use `sozo init <project-name>` to create a new Dojo project
+   - Understand the project structure (Scarb.toml, src directory, etc.)
+   - Configure your Scarb.toml with proper dependencies and metadata
+
+2. Define Models (src/models.cairo)
+   - Models are the foundation of your game state
+   - Use #[dojo::model] attribute on structs to define models (ONLY ON THE MODEL STRUCT ITSELF, not children structs)
+   - Add #[key] attribute to fields that uniquely identify entities
+   - Example:
+     ```
+     #[derive(Copy, Drop, Serde)]
+     #[dojo::model]
+     struct Position {
+         #[key]
+         player: ContractAddress,
+         vec: Vec2,
+     }
+     ```
+   - Models can contain any Cairo struct that derives Introspect
+
+3. Implement Systems (src/systems/*.cairo)
+   - Systems are contracts that modify the world state
+   - Use #[dojo::contract] attribute to define a system
+   - Define interfaces with #[starknet::interface]
+   - Implement system functions that read/write models
+   - Example:
+     ```
+     #[dojo::contract]
+     mod actions {
+         fn spawn(ref self: ContractState) {
+             let mut world = self.world(@"namespace");
+             // Read/write models here
+         }
+     }
+     ```
+   - Use world.read_model() to retrieve data
+   - Use world.write_model() to update data
+   - Remember to make your world reference mutable when writing
+
+4. Configure Dojo Profiles
+   - Set up dojo_dev.toml and dojo_release.toml
+   - Define worlds, models, and systems
+   - Configure RPC endpoints and account information
+
+5. Testing and Deployment
+   - Write tests to verify your game logic
+   - Deploy using `sozo migrate`
+   - Interact with your game using the Dojo CLI or client libraries
+
+Remember:
+- Always specify the namespace when accessing the world
+- Make sure your world reference is mutable when writing models
+- Use proper imports for ModelStorage, EventStorage, etc.
+- Keep systems focused on specific game mechanics
+- Use events to notify about important state changes
+
+Once you've read this guide you should follow this in order. You should first initialize the project with sozo init <name>,
+You should get rid / replace boilerplate stuff while you write your new models and systems.
+You should write models with the help of the dojo model prompt with the available ressources you have. Once the models are written, you should use them to write your systems, with the help of the logic prompt.
+Once all of those are done, you should write the project configuration files like Scarb.toml and dojo profiles. With the help dojo config prompt.
+
+WHENEVER YOU WANT TO ARE DEALING WITH READING AND WRITING MODELS YOU SHOULD USE THE MODEL TOOL. YOU KNOW MORE INSIGHT TO KNOW HOW TO WRITE THEM.
+WHENEVER YOU WANT TO ARE DEALING WITH READING AND WRITING SYSTEMS AND CODE YOU SHOULD USE THE LOGIC TOOL. YOU KNOW MORE INSIGHT TO KNOW HOW TO WRITE THEM.
+
+SAME thing for everything else. you need to use the corresponding tools
+
+use 101 to setup the project and then models tool for writing models, logic for systems and code and finally config for configuring the project
+
+{{resource:101}}

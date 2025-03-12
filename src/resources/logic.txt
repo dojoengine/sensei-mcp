@@ -1,0 +1,731 @@
+World API
+TL;DR
+The World API is the interface to interact with the World contract.
+The World API provides a set of functions to interact with the world state.
+Avoid writing long hand queries - just use the API.
+Let's consider the following models:
+
+
+#[derive(Drop, Copy, Serde)]
+#[dojo::model]
+struct Position {
+    #[key]
+    player: ContractAddress,
+    vec: Vec2,
+}
+ 
+#[derive(Copy, Drop, Serde)]
+#[dojo::model]
+struct Moves {
+    #[key]
+    player: ContractAddress,
+    remaining: u8,
+}
+read_model
+The read_model command is used to retrieve a model from the world state:
+
+
+let player = get_caller_address();
+// One model retrieved.
+let mut position: Position = world.read_model(player);
+Here we are retrieving the Position model from the world state. We are also using the caller to retrieve the models for the current entity.
+
+As a recall, a model must have at least one key to be retrievable. In this example, the model Position has exactly one key, caller.
+
+You can then use position as you would as any other Cairo struct.
+
+In the case that your model defines several keys, you must provide a value for each key.
+
+
+let player = get_caller_address();
+let location = 0x1234;
+ 
+let mut position: Position = world.read_model((player, location));
+If you use the read_model command on a model that has never been set before, all the fields that are not #[key] are equal to 0 in the returned model, which is the default value in the storage. As you provide the keys, even if the model has never been written, the returned struct will contain the keys you provided.
+
+write_model
+The write_model command is used to update a model's state.
+
+
+let player = get_caller_address();
+let location = 0x1234;
+ 
+// Read the model from the world state.
+let mut position: Position = world.read_model((player, location));
+ 
+// Update the model.
+position.vec.x = 10;
+position.vec.y = 10;
+ 
+// Write the model back to the world state.
+world.write_model(@position);
+Here we are updating the Position model in the world state using the player as the entity id.
+
+read_member and read_member_of_models
+The read_member and read_member_of_models commands are used to read a member from model(s).
+
+
+// The `ptr_from_keys` function is used to get the pointer to the model in the storage, for the given keys.
+// Then the `selector!` macro is used to get the member to target.
+let vec: Vec2 = world.read_member(Model::<Position>::ptr_from_keys(player), selector!("vec"));
+ 
+// In this case, several entities are trageted, which will return an array of the member values.
+// This function call could be read in english by: "Read the member `vec` from the models `Position` for the entities `player1` and `player2`."
+let vecs: Array<Vec2> = world.read_member_of_models(Model::<Position>::ptr_from_keys([player1, player2].span()), selector!("vec"));
+write_member and write_member_of_models
+The write_member and write_member_of_models commands are used to write a member to a model.
+
+
+let vec = Vec2{x: 1, y: 2};
+let vec_b = Vec2{x: 3, y: 4}
+// Same logic as the `read_member` command.
+world.write_member(Model::<Position>::ptr_from_keys(player), selector!("vec"), vec);
+ 
+// In this case, several entities are trageted, which will write the member to the models for the given entities.
+// This function call could be read in english by: "Write the member `vec` to the model `Position` for the entities `player1` and `player2`."
+let vecs = [vec, vec_b].span();
+world.write_member_of_models(Model::<Position>::ptr_from_keys([player1, player2].span()), selector!("vec"), vecs);
+emit_event
+The emit_event command is used to emit custom events. These events are indexed by Torii.
+
+
+world.emit_event(@Moved { address, direction });
+This will emit these values which could be captured by a client or you could query these via Torii.
+
+erase_model
+The erase_model command deletes a model from the db, which consists at writing the default value for all the model's fields (which are not keys).
+
+
+let player = get_caller_address();
+ 
+// Read the model from the world state.
+let moves = world.read_model(player);
+ 
+// Erase the model from the world state.
+world.erase_model(@moves);
+read_schema and read_schemas
+The read_schema command allows for effient reading of parts of models. To define a schema the members name and type need to match the model, it needs to have Serde and Introspect derived and the model cannot be packed. If you plan to only read/write one member, read_member and write_member are more efficient. When two or more members are read, read_schema is more efficient.
+
+
+#[derive(Copy, Drop, Serde, Debug, Introspect)]
+struct AStruct {
+    a: u8,
+    b: u8,
+    c: u8,
+    d: u8,
+}
+ 
+#[dojo::model]
+#[derive(Copy, Drop, Serde, Debug)]
+struct Foo4 {
+    #[key]
+    id: felt252,
+    v0: u256,
+    v1: felt252,
+    v2: u128,
+    v3: AStruct,
+}
+ 
+#[derive(Copy, Drop, Serde, Debug, Introspect)]
+struct MySchema {
+    // Name and type must match the model.
+    v0: u256,
+    // Name and type must match the model.
+    v3: AStruct,
+}
+ 
+fn something(){
+    let id: felt252 = 12;
+    let schema: MySchema = world.read_schema(Model::<Foo4>::ptr_from_keys(id));
+ 
+    // If an other struct has `v0` and `v3` as members (with the same types), you can read it like this:
+    // (The id could be something different, it is just an example)
+    let schema: MySchema = world.read_schema(Model::<FooOther>::ptr_from_keys(id));
+ 
+    // If you want to read multiple schemas, you can use the `read_schemas` command.
+    let ids: Span<felt252> = [12, 13].span();
+    let schemas: Array<MySchema> = world.read_schemas(Model::<Foo4>::ptrs_from_keys(ids));
+}
+World Interface
+The world exposes an interface which can be interacted with by any client. It is worth noting here that as a developer you don't deploy this world, it is deployed when you migrate your project as it is part of the dojo-core library.
+
+However, you can interact with the world contract directly if you need to for instance to use the uuid function as it is often useful to generate unique IDs for entities.
+
+
+let game_id = world.uuid();
+Here's the full world's API for low level access:
+
+
+#[starknet::interface]
+pub trait IWorld<T> {
+    /// Returns the resource from its selector.
+    ///
+    /// # Arguments
+    ///   * `selector` - the resource selector
+    ///
+    /// # Returns
+    ///   * `Resource` - the resource data associated with the selector.
+    fn resource(self: @T, selector: felt252) -> Resource;
+ 
+    /// Issues an autoincremented id to the caller.
+    /// This functionalities is useful to generate unique, but sequential ids.
+    ///
+    /// Note: This functionalities may impact performances since transaction paralellisation can't
+    /// be achieved since the same storage slot is being written.
+    fn uuid(ref self: T) -> usize;
+ 
+    /// Returns the metadata of the resource.
+    ///
+    /// # Arguments
+    ///
+    /// `resource_selector` - The resource selector.
+    fn metadata(self: @T, resource_selector: felt252) -> ResourceMetadata;
+ 
+    /// Sets the metadata of the resource.
+    ///
+    /// # Arguments
+    ///
+    /// `metadata` - The metadata content for the resource.
+    fn set_metadata(ref self: T, metadata: ResourceMetadata);
+ 
+    /// Registers a namespace in the world.
+    ///
+    /// # Arguments
+    ///
+    /// * `namespace` - The name of the namespace to be registered.
+    fn register_namespace(ref self: T, namespace: ByteArray);
+ 
+    /// Registers an event in the world.
+    ///
+    /// # Arguments
+    ///
+    /// * `namespace` - The namespace of the event to be registered.
+    /// * `class_hash` - The class hash of the event to be registered.
+    fn register_event(ref self: T, namespace: ByteArray, class_hash: ClassHash);
+ 
+    /// Registers a model in the world.
+    ///
+    /// # Arguments
+    ///
+    /// * `namespace` - The namespace of the model to be registered.
+    /// * `class_hash` - The class hash of the model to be registered.
+    fn register_model(ref self: T, namespace: ByteArray, class_hash: ClassHash);
+ 
+    /// Registers and deploys a contract associated with the world and returns the address of newly
+    /// deployed contract.
+    ///
+    /// # Arguments
+    ///
+    /// * `salt` - The salt use for contract deployment.
+    /// * `namespace` - The namespace of the contract to be registered.
+    /// * `class_hash` - The class hash of the contract.
+    fn register_contract(
+        ref self: T, salt: felt252, namespace: ByteArray, class_hash: ClassHash,
+    ) -> ContractAddress;
+ 
+    /// Initializes a contract associated registered in the world.
+    ///
+    /// As a constructor call, the initialization function can be called only once, and only
+    /// callable by the world itself.
+    ///
+    /// Also, the caller of this function must have the writer owner permission for the contract
+    /// resource.
+    fn init_contract(ref self: T, selector: felt252, init_calldata: Span<felt252>);
+ 
+    /// Upgrades an event in the world.
+    ///
+    /// # Arguments
+    ///
+    /// * `namespace` - The namespace of the event to be upgraded.
+    /// * `class_hash` - The class hash of the event to be upgraded.
+    fn upgrade_event(ref self: T, namespace: ByteArray, class_hash: ClassHash);
+ 
+    /// Upgrades a model in the world.
+    ///
+    /// # Arguments
+    ///
+    /// * `namespace` - The namespace of the model to be upgraded.
+    /// * `class_hash` - The class hash of the model to be upgraded.
+    fn upgrade_model(ref self: T, namespace: ByteArray, class_hash: ClassHash);
+ 
+    /// Upgrades an already deployed contract associated with the world and returns the new class
+    /// hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `namespace` - The namespace of the contract to be upgraded.
+    /// * `class_hash` - The class hash of the contract.
+    fn upgrade_contract(ref self: T, namespace: ByteArray, class_hash: ClassHash) -> ClassHash;
+ 
+    /// Emits a custom event that was previously registered in the world.
+    /// The dojo event emission is permissioned, since data are collected by
+    /// Torii and served to clients.
+    ///
+    /// # Arguments
+    ///
+    /// * `event_selector` - The selector of the event.
+    /// * `keys` - The keys of the event.
+    /// * `values` - The data to be logged by the event.
+    fn emit_event(ref self: T, event_selector: felt252, keys: Span<felt252>, values: Span<felt252>);
+ 
+    /// Emits multiple events.
+    /// Permissions are only checked once, then the events are batched.
+    ///
+    /// # Arguments
+    ///
+    /// * `event_selector` - The selector of the event.
+    /// * `keys` - The keys of the event.
+    /// * `values` - The data to be logged by the event.
+    fn emit_events(
+        ref self: T,
+        event_selector: felt252,
+        keys: Span<Span<felt252>>,
+        values: Span<Span<felt252>>,
+    );
+ 
+    /// Gets the values of a model entity/member.
+    /// Returns a zero initialized model value if the entity/member has not been set.
+    ///
+    /// # Arguments
+    ///
+    /// * `model_selector` - The selector of the model to be retrieved.
+    /// * `index` - The index of the entity/member to read.
+    /// * `layout` - The memory layout of the model.
+    ///
+    /// # Returns
+    ///
+    /// * `Span<felt252>` - The serialized value of the model, zero initialized if not set.
+    fn entity(
+        self: @T, model_selector: felt252, index: ModelIndex, layout: Layout,
+    ) -> Span<felt252>;
+ 
+    /// Gets the model values for the given entities.
+    ///
+    /// # Arguments
+    ///
+    /// * `model_selector` - The selector of the model to be retrieved.
+    /// * `indices` - The indexes of the entities/members to read.
+    /// * `layout` - The memory layout of the model.
+    fn entities(
+        self: @T, model_selector: felt252, indexes: Span<ModelIndex>, layout: Layout,
+    ) -> Span<Span<felt252>>;
+ 
+    /// Sets the model value for the given entity/member.
+    ///
+    /// # Arguments
+    ///
+    /// * `model_selector` - The selector of the model to be set.
+    /// * `index` - The index of the entity/member to write.
+    /// * `values` - The value to be set, serialized using the model layout format.
+    /// * `layout` - The memory layout of the model.
+    fn set_entity(
+        ref self: T,
+        model_selector: felt252,
+        index: ModelIndex,
+        values: Span<felt252>,
+        layout: Layout,
+    );
+ 
+    /// Sets the model values for the given entities.
+    /// The permissions are only checked once, then the writes are batched.
+    ///
+    /// # Arguments
+    ///
+    /// * `model_selector` - The selector of the model to be set.
+    /// * `indexes` - The indexes of the entities/members to write.
+    /// * `values` - The values to be set, serialized using the model layout format.
+    /// * `layout` - The memory layout of the model.
+    fn set_entities(
+        ref self: T,
+        model_selector: felt252,
+        indexes: Span<ModelIndex>,
+        values: Span<Span<felt252>>,
+        layout: Layout,
+    );
+ 
+    /// Deletes a model value for the given entity/member.
+    /// Deleting is setting all the values to 0 in the given layout.
+    ///
+    /// # Arguments
+    ///
+    /// * `model_selector` - The selector of the model to be deleted.
+    /// * `index` - The index of the entity/member to delete.
+    /// * `layout` - The memory layout of the model.
+    fn delete_entity(ref self: T, model_selector: felt252, index: ModelIndex, layout: Layout);
+ 
+    /// Deletes the model values for the given entities.
+    /// The permissions are only checked once, then the deletes are batched.
+    ///
+    /// # Arguments
+    ///
+    /// * `model_selector` - The selector of the model to be deleted.
+    /// * `indexes` - The indexes of the entities/members to delete.
+    /// * `layout` - The memory layout of the model.
+    fn delete_entities(
+        ref self: T, model_selector: felt252, indexes: Span<ModelIndex>, layout: Layout,
+    );
+ 
+    /// Returns true if the provided account has owner permission for the resource, false otherwise.
+    ///
+    /// # Arguments
+    ///
+    /// * `resource` - The selector of the resource.
+    /// * `address` - The address of the contract.
+    fn is_owner(self: @T, resource: felt252, address: ContractAddress) -> bool;
+ 
+    /// Grants owner permission to the address.
+    /// Can only be called by an existing owner or the world admin.
+    ///
+    /// Note that this resource must have been registered to the world first.
+    ///
+    /// # Arguments
+    ///
+    /// * `resource` - The selector of the resource.
+    /// * `address` - The address of the contract to grant owner permission to.
+    fn grant_owner(ref self: T, resource: felt252, address: ContractAddress);
+ 
+    /// Revokes owner permission to the contract for the resource.
+    /// Can only be called by an existing owner or the world admin.
+    ///
+    /// Note that this resource must have been registered to the world first.
+    ///
+    /// # Arguments
+    ///
+    /// * `resource` - The selector of the resource.
+    /// * `address` - The address of the contract to revoke owner permission from.
+    fn revoke_owner(ref self: T, resource: felt252, address: ContractAddress);
+ 
+ 
+    /// Returns true if the provided contract has writer permission for the resource, false
+    /// otherwise.
+    ///
+    /// # Arguments
+    ///
+    /// * `resource` - The selector of the resource.
+    /// * `contract` - The address of the contract.
+    fn is_writer(self: @T, resource: felt252, contract: ContractAddress) -> bool;
+ 
+    /// Grants writer permission to the contract for the resource.
+    /// Can only be called by an existing resource owner or the world admin.
+    ///
+    /// Note that this resource must have been registered to the world first.
+    ///
+    /// # Arguments
+    ///
+    /// * `resource` - The selector of the resource.
+    /// * `contract` - The address of the contract to grant writer permission to.
+    fn grant_writer(ref self: T, resource: felt252, contract: ContractAddress);
+ 
+    /// Revokes writer permission to the contract for the resource.
+    /// Can only be called by an existing resource owner or the world admin.
+    ///
+    /// Note that this resource must have been registered to the world first.
+    ///
+    /// # Arguments
+    ///
+    /// * `resource` - The selector of the resource.
+    /// * `contract` - The address of the contract to revoke writer permission from.
+    fn revoke_writer(ref self: T, resource: felt252, contract: ContractAddress);
+}
+
+Systems
+Systems = Functions in a Dojo contract
+
+TL;DR
+Systems are Dojo contract functions.
+Systems can access to the world using the self.world(<NAMESPACE>) function.
+Systems engage the world contract to alter models' state.
+Systems ought to be concise and specific.
+In most scenarios, systems are stateless.
+What are systems?
+Within Dojo we define systems as functions within a Dojo contract that act on the world.
+
+Systems play a pivotal role in your world's logic, directly mutating its component states. It's important to understand that to enact these mutations, a system needs explicit permission from the models owner.
+
+Permissions
+In order to write data to the world, a system needs explicit permission from the models owner.
+
+Permissions defined contract level
+Permissions are defined at Dojo contract level. Which means that all the systems inside the same contract will inherit the same permissions.
+
+Before defining your systems, prioritize permissions. Plan carefully to ensure proper access and security.
+
+A simple way to think about system design for permissions:
+
+System Permissions
+
+Dojo interface
+In a Dojo contract, you must first define a Dojo interface to declare the systems that your contract will expose.
+
+
+#[starknet::interface]
+trait IActions<T> {
+    fn spawn(ref self: T);
+    fn move(ref self: T, direction: Direction);
+}
+System implementation
+To implement the code related to the system, you must be placed inside a #[dojo::contract] and implement the interface you've defined.
+
+
+#[dojo::contract]
+mod actions {
+    use super::IActions;
+    use dojo::model::{ModelStorage, ModelValueStorage};
+ 
+    #[abi(embed_v0)]
+    impl ActionsImpl of IActions<ContractState> {
+        fn spawn(ref self: ContractState) {
+            // Get the default world.
+            let mut world = self.world(@"dojo_starter");
+ 
+            // Get the address of the current caller, possibly
+            // the player's address.
+            let player = get_caller_address();
+ 
+            // Retrieve the player's current position from the world.
+            let mut position: Position = world.read_model(player);
+ 
+            // Update the world state with the new data.
+ 
+            // 1. Move the player's position 10 units in both
+            // the x and y direction.
+            let new_position = Position {
+                player,
+                vec: Vec2 {
+                    x: position.vec.x + 10,
+                    y: position.vec.y + 10
+                }
+            };
+ 
+            // Write the new position to the world.
+            world.write_model(@new_position);
+ 
+            // 2. Set the player's remaining moves to 100.
+            let moves = Moves {
+                player, remaining: 100,
+                last_direction: Direction::None, can_move: true
+            };
+ 
+            // Write the new moves to the world.
+            world.write_model(@moves);
+        }
+ 
+        fn move(ref self: ContractState, direction: Direction) {
+ 
+            // Get the default world.
+            let mut world = self.world(@"dojo_starter");
+ 
+            // Get the address of the current caller, possibly
+            // the player's address.
+            let player = get_caller_address();
+ 
+            // Retrieve the player's current position and moves data
+            // from the world.
+            let mut position: Position = world.read_model(player);
+            let mut moves: Moves = world.read_model(player);
+ 
+            // Deduct one from the player's remaining moves.
+            moves.remaining -= 1;
+ 
+            // Update the last direction the player moved in.
+            moves.last_direction = direction;
+ 
+            // Calculate the player's next position based on
+            // the provided direction.
+            let next = next_position(position, direction);
+ 
+            // Write the new position to the world.
+            world.write_model(@next);
+ 
+            // Write the new moves to the world.
+            world.write_model(@moves);
+ 
+            // Emit an event to the world to notify about
+            // the player's move.
+            world.emit_event(@Moved { player, direction });
+        }
+    }
+}
+Inside the system's implementation, you can use the Dojo api to easily interact with the world.
+
+Events
+Events play a pivotal role in decoding the dynamics of a Dojo world. Every time there's an update to a model, the world contract emits events.
+
+What's even more exciting is that you can craft your own custom events to fit specific needs! Moreover, thanks to model's introspection and Torii, all these events are seamlessly indexed, ensuring easy and efficient querying.
+
+Custom Events
+Within your game, emitting custom events can be highly beneficial. Fortunately, there's a handy emit_event api that lets you release events directly from your world. These events are indexed by Torii.
+
+There are two kind of Custom Events with different use-cases.
+
+Using dojo::event
+These events are acting like 'off-chain' storage and behave like models which allows Torii to easily parse them. Since it mimics models behaviour, a Dojo event must have a least a #[key] and any type used inside it must derive Introspect.
+
+For example we will declare a PlayerMood struct to keep track of player mood.
+
+We don't need this information onchain.
+We don't want to historize PlayerMood changes, just keep track of the current/latest PlayerMood.
+
+#[derive(Copy, Drop, Introspect)]
+struct Mood {
+    Happy,
+    Angry,
+}
+ 
+#[derive(Copy, Drop, Serde)]
+#[dojo::event]
+struct PlayerMood {
+    #[key]
+    player: ContractAddress,
+    mood: Mood,
+ }
+Emit the PlayerMood event:
+
+
+world.emit_event(@PlayerMood { player, mood: Mood::Happy });
+Each time a PlayerMood event is emitted, the PlayerMood event indexed by Torii will reflect the lasted mood.
+
+Example
+Now a full example using a custom event:
+
+
+fn move(ref self: ContractState, direction: Direction) {
+ 
+    let player = get_caller_address();
+    let mut position: Position = world.read_model(player);
+    let mut moves: Moves = world.read_model(player);
+ 
+    moves.remaining -= 1;
+    moves.last_direction = direction;
+    let next = next_position(position, direction);
+ 
+    world.write_model(@moves);
+    world.write_model(@next);
+ 
+    world.emit_event(@Moved { address, direction });
+}
+Keep in mind that the world already emits a core event anytime a model is updated. So you don't need to emit events to keep track of the same information.
+
+
+Finally here is an example of a contract "actions.cairo" with systems inside.
+Refer to this when writing systems / contracts. Make sure you have the correct imports, syntax and mutability specifiers.
+
+use dojo_starter::models::{Direction, Position};
+
+// define the interface
+#[starknet::interface]
+pub trait IActions<T> {
+    fn spawn(ref self: T);
+    fn move(ref self: T, direction: Direction);
+}
+
+// dojo decorator
+#[dojo::contract]
+pub mod actions {
+    use super::{IActions, Direction, Position, next_position};
+    use starknet::{ContractAddress, get_caller_address};
+    use dojo_starter::models::{Vec2, Moves};
+
+    use dojo::model::{ModelStorage};
+    use dojo::event::EventStorage;
+
+    #[derive(Copy, Drop, Serde)]
+    #[dojo::event]
+    pub struct Moved {
+        #[key]
+        pub player: ContractAddress,
+        pub direction: Direction,
+    }
+
+    #[abi(embed_v0)]
+    impl ActionsImpl of IActions<ContractState> {
+        fn spawn(ref self: ContractState) {
+            // Get the default world.
+            let mut world = self.world(@"ns");
+
+            // Get the address of the current caller, possibly the player's address.
+            let player = get_caller_address();
+            // Retrieve the player's current position from the world.
+            let position: Position = world.read_model(player);
+
+            // Update the world state with the new data.
+
+            // 1. Move the player's position 10 units in both the x and y direction.
+            let new_position = Position {
+                player, vec: Vec2 { x: position.vec.x + 10, y: position.vec.y + 10 },
+            };
+
+            // Write the new position to the world.
+            world.write_model(@new_position);
+
+            // 2. Set the player's remaining moves to 100.
+            let moves = Moves {
+                player, remaining: 100, last_direction: Option::None, can_move: true,
+            };
+
+            // Write the new moves to the world.
+            world.write_model(@moves);
+        }
+
+        // Implementation of the move function for the ContractState struct.
+        fn move(ref self: ContractState, direction: Direction) {
+            // Get the address of the current caller, possibly the player's address.
+
+            let mut world = self.world(@"ns");
+
+            let player = get_caller_address();
+
+            // Retrieve the player's current position and moves data from the world.
+            let position: Position = world.read_model(player);
+            let mut moves: Moves = world.read_model(player);
+            // if player hasn't spawn, read returns model default values. This leads to sub overflow
+            // afterwards.
+            // Plus it's generally considered as a good pratice to fast-return on matching
+            // conditions.
+            if !moves.can_move {
+                return;
+            }
+
+            // Deduct one from the player's remaining moves.
+            moves.remaining -= 1;
+
+            // Update the last direction the player moved in.
+            moves.last_direction = Option::Some(direction);
+
+            // Calculate the player's next position based on the provided direction.
+            let next = next_position(position, moves.last_direction);
+
+            // Write the new position to the world.
+            world.write_model(@next);
+
+            // Write the new moves to the world.
+            world.write_model(@moves);
+
+            // Emit an event to the world to notify about the player's move.
+            world.emit_event(@Moved { player, direction });
+        }
+    }
+
+    #[generate_trait]
+    impl InternalImpl of InternalTrait {
+        /// Use the default namespace "dojo_starter". This function is handy since the ByteArray
+        /// can't be const.
+        fn world_default(self: @ContractState) -> dojo::world::WorldStorage {
+            self.world(@"dojo_starter")
+        }
+    }
+}
+
+// Define function like this:
+fn next_position(mut position: Position, direction: Option<Direction>) -> Position {
+    match direction {
+        Option::None => { return position; },
+        Option::Some(d) => match d {
+            Direction::Left => { position.vec.x -= 1; },
+            Direction::Right => { position.vec.x += 1; },
+            Direction::Up => { position.vec.y -= 1; },
+            Direction::Down => { position.vec.y += 1; },
+        },
+    };
+    position
+}

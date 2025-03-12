@@ -1,0 +1,55 @@
+This is the tokens preprompt that should be called whenever you (the LLM/agent) are trying to write tokens (like erc20, erc721 etc..). If the user asks you to write anything related to that. You would call this tool first.  
+When working with token contracts in Dojo, remember these critical points:
+
+1. Dojo supports standard token implementations through OpenZeppelin components:
+   - ERC20 for fungible tokens (like currencies)
+   - ERC721 for non-fungible tokens (like unique collectibles)
+   - ERC1155 for semi-fungible tokens (like inventory items)
+
+2. Token contracts use component architecture:
+   - Components are imported from OpenZeppelin libraries
+   - Each component has storage, events, and implementation traits
+   - Components are combined using the component! macro
+
+3. For ERC20 tokens:
+   - Use for in-game currencies, resources, or reward points
+   - Implement mint/burn functions with proper access control
+   - Consider adding transfer restrictions for game balance
+
+4. For ERC721 tokens:
+   - Use for unique collectibles, achievements, or character NFTs
+   - Implement metadata functions for token attributes
+   - Consider using ERC4906 for metadata update notifications
+
+5. For ERC1155 tokens:
+   - Use for inventory items, consumables, or multi-token systems
+   - Implement batch operations for efficiency
+   - Consider custom URI functions for dynamic metadata
+
+6. For access control:
+   - Use OwnableComponent for simple owner-based permissions
+   - Implement custom role-based systems for more complex games
+
+7. For integration with Dojo worlds:
+   - Register token contracts in dojo_dev.toml as external_contracts
+   - Provide correct constructor_data based on contract requirements
+   - Use unique instance_name and salt values for each contract
+
+8. For constructor parameters:
+   - ERC20: owner, name, symbol, initial_supply, recipient
+   - ERC721: owner, name, symbol, base_uri
+   - ERC1155: owner, base_uri
+
+9. For interacting with tokens from systems:
+   - Import token contract interfaces
+   - Use dispatchers to call token contract functions
+   - Handle token transfers and approvals properly
+
+10. For security considerations:
+    - Implement proper access control for mint/burn functions
+    - Consider rate limiting for token generation
+    - Test thoroughly before deployment
+11. Dont forget to write the trait for the token contract and use the dispatcher in the systems to mint/interact with the token. DONT FORGET to make it public to be accessible from outside
+12. Dont forget to add the new modules in the lib.cairo. 
+
+{{resource:token}}

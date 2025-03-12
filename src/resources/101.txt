@@ -1,0 +1,219 @@
+Dojo in 15 minutes or less
+To start, let's create a new project to run locally on your machine.
+
+
+sozo init dojo-starter
+Congratulations! You now have a local Dojo project!
+
+This command creates a dojo-starter project in your current directory from the Dojo starter template. It's the ideal starting point for a new project and equips you with everything you need to begin hacking.
+
+Anatomy of a Dojo Project
+Inspect the contents of the dojo-starter project, and you'll notice the following structure (excluding the non-Cairo files):
+
+
+├── Scarb.toml
+├── dojo_dev.toml
+├── dojo_release.toml
+└── src
+    ├── lib.cairo
+    ├── models.cairo
+    ├── systems
+    │   └── actions.cairo
+    └── tests
+        └── test_world.cairo
+The scarb manifest (Scarb.toml) is a configuration file where project dependencies, metadata and other configurations are defined.
+
+Models
+Next, open the src/models.cairo file to continue.
+
+
+// ...
+ 
+#[derive(Copy, Drop, Serde)]
+#[dojo::model]
+struct Moves {
+    #[key]
+    player: ContractAddress,
+    remaining: u8,
+	...
+}
+ 
+// ...
+Notice the #[dojo::model] attribute.
+
+For a model to be recognized, we must add this attribute to a Cairo struct. This tells to the Dojo compiler that this struct should be treated as a model.
+
+Understanding the #[key] Attribute in the Moves Model
+Our Moves model includes a player field, which is crucial for how Dojo manages and queries data. Models act like structured database entries, managing and organizing your onchain data. Like a regular ORM - but onchain!
+
+Next, lets have a look at the src/models/position.cairo file.
+
+
+// ...
+#[derive(Drop, Copy, Serde)]
+#[dojo::model]
+struct Position {
+    // Define a Key. This acts like a primary key does in a regular ORM
+    #[key]
+    player: ContractAddress,
+ 
+    // Define a value field. This acts like a column in a regular ORM.
+    vec: Vec2,
+}
+ 
+// define Introspect struct
+#[derive(Drop, Copy, Serde, Introspect)]
+struct Vec2 {
+    // Define a value field. This acts like a column in a regular ORM.
+    x: u32,
+    y: u32
+}
+ 
+// ...
+The Position model, like Moves, is indexed by the player field and includes a Vec2 struct for x and y coordinates. Models can contain any Cairo struct that derives the Introspect trait, which allows the compiler to introspect the struct and generate the necessary code to interact with it.
+
+Deeper into Models
+Learn more about models and how they are used in Dojo.
+
+Contract Systems
+A dojo contract is just a regular Starknet contract which is defined with the #[dojo::contract] attribute.
+
+First, a dojo contract must define one (or more) Dojo interfaces.
+
+
+#[starknet::interface]
+pub trait IActions<T> {
+    fn spawn(ref self: T);
+    fn move(ref self: T, direction: Direction);
+}
+Now, let's examine a contract implementation of the src/systems/actions.cairo file.
+
+
+use dojo_starter::models::{Direction, Position};
+ 
+// define the interface
+#[starknet::interface]
+trait IActions<T> {
+    fn spawn(ref self: T);
+    fn move(ref self: T, direction: Direction);
+}
+ 
+// dojo decorator
+#[dojo::contract]
+pub mod actions {
+    use super::{IActions, Direction, Position, next_position};
+    use starknet::{ContractAddress, get_caller_address};
+    use dojo_starter::models::{Vec2, Moves, DirectionsAvailable};
+ 
+    use dojo::model::{ModelStorage, ModelValueStorage};
+    use dojo::event::EventStorage;
+ 
+    #[derive(Copy, Drop, Serde)]
+    #[dojo::event]
+    pub struct Moved {
+        #[key]
+        pub player: ContractAddress,
+        pub direction: Direction,
+    }
+ 
+    #[abi(embed_v0)]
+    impl ActionsImpl of IActions<ContractState> {
+        fn spawn(ref self: ContractState) {
+            // Get the default world.
+            let mut world = self.world(@"ns");
+ 
+            // Get the address of the current caller, possibly the player's address.
+            let player = get_caller_address();
+            // Retrieve the player's current position from the world.
+            let position: Position = world.read_model(player);
+ 
+            // Update the world state with the new data.
+ 
+            // 1. Move the player's position 10 units in both the x and y direction.
+            let new_position = Position {
+                player, vec: Vec2 { x: position.vec.x + 10, y: position.vec.y + 10 }
+            };
+ 
+            // Write the new position to the world.
+            world.write_model(@new_position);
+ 
+            // 2. Set the player's remaining moves to 100.
+            let moves = Moves {
+                player, remaining: 100, last_direction: Direction::None(()), can_move: true
+            };
+ 
+            // Write the new moves to the world.
+            world.write_model(@moves);
+        }
+ 
+        // Implementation of the move function for the ContractState struct.
+        fn move(ref self: ContractState, direction: Direction) {
+            // Get the default world.
+            let mut world = self.world(@"ns");
+ 
+            // Get the address of the current caller, possibly the player's address.
+            let player = get_caller_address();
+ 
+            // Retrieve the player's current position and moves data from the world.
+            let position: Position = world.read_model(player);
+            let mut moves: Moves = world.read_model(player);
+ 
+            // Deduct one from the player's remaining moves.
+            moves.remaining -= 1;
+ 
+            // Update the last direction the player moved in.
+            moves.last_direction = direction;
+ 
+            // Calculate the player's next position based on the provided direction.
+            let next = next_position(position, direction);
+ 
+            // Write the new position to the world.
+            world.write_model(@next);
+ 
+            // Write the new moves to the world.
+            world.write_model(@moves);
+ 
+            // Emit an event to the world to notify about the player's move.
+            world.emit_event(@Moved { player, direction });
+        }
+    }
+ 
+    #[generate_trait]
+    impl InternalImpl of InternalTrait {
+        // Use the default namespace "dojo_starter".
+        // This function is handy since the ByteArray can't be const.
+        fn world_default(self: @ContractState) -> dojo::world::WorldStorage {
+            self.world(@"dojo_starter")
+        }
+    }
+}
+ 
+// Define function like this:
+fn next_position(mut position: Position, direction: Direction) -> Position {
+    match direction {
+        Direction::None => { return position; },
+        Direction::Left => { position.vec.x -= 1; },
+        Direction::Right => { position.vec.x += 1; },
+        Direction::Up => { position.vec.y -= 1; },
+        Direction::Down => { position.vec.y += 1; },
+    };
+    position
+}
+Using the world.write_model method
+Here we use the world.write_model method to set the Moves and Position models for the player entity. This method is used to update the world state with the new data.
+
+
+let moves = Moves { 
+    player, remaining: 100, last_direction: Direction::None(()), can_move: true
+};
+ 
+// Write the new moves to the world.
+world.write_model(@moves);
+
+We covered a lot here in a short time. Let's recap:
+
+Explained the anatomy of a Dojo project
+Explained the importance of the #[dojo::model]attribute and how models are defined
+Explained how #[dojo::contract] are used to define systems
+Explained how to inject the world into a system
+Touched on the world.read_model and world.write_model methods to interact with the world

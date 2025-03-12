@@ -1,0 +1,36 @@
+This is the test preprompt that should be called whenever you (the LLM/agent) are trying to write tests. If the user asks you to write anything related to tests. You would call this tool first.  
+When writing tests for Dojo systems, remember these critical points:
+
+1. Testing types:
+   - Unit tests: Test individual functions and models
+   - Integration tests: Test entire systems and interactions
+
+2. Running tests:
+   - Use `sozo test` to run all tests in your project
+   - Tests are identified by the #[test] attribute
+
+3. Unit test best practices:
+   - Include unit tests in the same file as the model/system
+   - Use #[cfg(test)] mod tests { ... } to organize tests
+   - Test all functions of your models
+   - Use #[available_gas(amount)] to specify gas limits
+
+4. Integration test structure:
+   - Create tests in a separate directory
+   - Define namespace_def() to specify resources
+   - Define contract_defs() for permissions
+   - Use spawn_test_world() to create test environment
+
+5. Key testing functions:
+   - world.read_model() to verify state
+   - world.write_model_test() to set up test conditions
+   - world.erase_model() to reset state
+   - spawn_test_world() to create test environment
+   - world.sync_perms_and_inits() to set up permissions
+
+6. Always test:
+   - Initial state
+   - State changes after system calls
+   - Error conditions with proper assertions
+
+{{resource:test}}

@@ -1,0 +1,112 @@
+This is the config preprompt that should be called whenever you (the LLM/agent) are trying to write configuration files / workspace files related to Dojo, scarb, cairo etc... If the user asks you to write anything related to that. You would call this tool first.  
+When working with Dojo configuration, remember these critical points:
+
+1. Profile-based system:
+   - Always specify which profile you want to use (default is "dev")
+   - Two main config files: Scarb.toml and dojo_<PROFILE>.toml
+
+2. For Scarb.toml:
+   - Include required dependencies (dojo, starknet)
+   - Set correct cairo-version
+   - Configure build-external-contracts for any external contracts like ERCs
+   - Use [profile.<PROFILE>] sections for custom profiles
+
+3. For dojo_<PROFILE>.toml:
+   - Configure [world] section with metadata (name, description, etc.)
+   - Set [env] with network details (rpc_url, account_address, private_key)
+   - Define [namespace] with default and mappings
+   - List models, events, and contracts with appropriate tags
+
+4. For permissions:
+   - Use [writers] to specify which contracts can write to which models
+   - Use [owners] to define ownership permissions
+   - Format: "<TARGET_TAG>" = ["<GRANTEE_TAG>"]
+
+5. For initialization:
+   - Configure [init_call_args] for contract initialization
+   - Use proper Dojo calldata format
+   - Specify order with [migration] order_inits if needed
+
+6. For external contracts:
+   - Use [[external_contracts]] sections
+   - Specify contract_name, instance_name (optional), salt, and constructor_data
+   - Follow Dojo calldata format for constructor arguments
+
+7. For migration control:
+   - Use [migration] section to control deployment behavior
+   - Configure order_inits, skip_contracts, disable_multicall as needed
+
+8. Common issues to avoid:
+   - Missing external contracts in build-external-contracts
+   - Incorrect namespace mappings
+   - Missing or incorrect permissions in [writers]/[owners]
+   - Improper initialization arguments
+
+You should refer to the most up to date version, here is the latest up to date examples:
+
+[package]
+cairo-version = "=2.9.2"
+name = "dojo_examples"
+version = "1.2.2"
+# Use the prelude with the less imports as possible
+# from corelib.
+edition = "2024_07"
+
+[cairo]
+sierra-replace-ids = true
+
+[[target.starknet-contract]]
+build-external-contracts = [ "dojo::world::world_contract::world", "armory::m_Flatbow", "bestiary::m_RiverSkale" ]
+allowed-libfuncs-list.name = "experimental"
+
+[dependencies]
+openzeppelin = "0.20.0"
+armory = { path = "../game-lib/armory" }
+bestiary = { path = "../game-lib/bestiary" }
+dojo = { path = "../../crates/dojo/core" }
+starknet = "2.9.2"
+
+[dev-dependencies]
+cairo_test = "2.9.2"
+dojo_cairo_test = { path = "../../crates/dojo/core-cairo-test" }
+
+[features]
+default = [ "dungeon" ]
+dungeon = [  ]
+
+[profile.saya]
+
+
+[package]
+cairo-version = "=2.9.2"
+name = "dojo_examples"
+version = "1.2.2"
+# Use the prelude with the less imports as possible
+# from corelib.
+edition = "2024_07"
+
+[cairo]
+sierra-replace-ids = true
+
+[[target.starknet-contract]]
+build-external-contracts = [ "dojo::world::world_contract::world", "armory::m_Flatbow", "bestiary::m_RiverSkale" ]
+allowed-libfuncs-list.name = "experimental"
+
+[dependencies]
+openzeppelin = "0.20.0"
+armory = { path = "../game-lib/armory" }
+bestiary = { path = "../game-lib/bestiary" }
+dojo = { path = "../../crates/dojo/core" }
+starknet = "2.9.2"
+
+[dev-dependencies]
+cairo_test = "2.9.2"
+dojo_cairo_test = { path = "../../crates/dojo/core-cairo-test" }
+
+[features]
+default = [ "dungeon" ]
+dungeon = [  ]
+
+[profile.saya]
+
+{{resource:config}}

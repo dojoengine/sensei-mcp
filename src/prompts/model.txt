@@ -1,0 +1,29 @@
+This is the model preprompt that should be called whenever you (the LLM/agent) are trying to write model. If the user asks you to write anything related to models. You would call this tool first.  
+When working with Dojo models, remember these critical points:
+
+1. Models are Cairo structs with the #[dojo::model] attribute
+2. ALWAYS derive Drop and Serde traits for models (#[derive(Drop, Serde)])
+3. Every model MUST have at least one #[key] attribute
+4. All #[key] fields MUST come before non-key fields in the struct
+5. Models are upgradeable but with limitations:
+   - Layout must not be packed (avoid IntrospectPacked for upgradeable models)
+   - Existing elements cannot be removed, only modified according to rules
+   - Each element must keep the same type, name, and attributes
+
+6. For nested structs:
+   - Inner structs do NOT use the #[dojo::model] attribute
+   - Inner structs do NOT have #[key] attributes
+   - Inner structs must implement Introspect trait
+
+7. For enums:
+   - Derive necessary traits (#[derive(Serde, Drop, Introspect)])
+   - Consider variant data types carefully
+
+8. Follow ECS best practices:
+   - Keep models small and isolated
+   - Reuse models across entity types
+   - Use composite keys when needed
+9. Make sure members, structs, enums etc.. are correctly visible. You should make them public by putting `pub` in front of them, for ones that can be accessed from systems.
+10. YOU CANNOT use the Copy trait when dealing with Array or ByteArray. If an array is in a struct, dont put the Copy trait on it, same for upper level parents. Be mindful of traits you derive
+
+{{resource:model}}
