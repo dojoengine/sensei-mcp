@@ -40,13 +40,16 @@ export interface PromptMetadata {
 /**
  * Parse metadata from prompt content
  */
-export function parseMetadata(content: string): { metadata: PromptMetadata; content: string } {
+export function parseMetadata(content: string): {
+  metadata: PromptMetadata;
+  content: string;
+} {
   const metadata: PromptMetadata = {};
   const metadataMatch = content.match(METADATA_PATTERN);
 
   if (metadataMatch) {
     const metadataBlock = metadataMatch[1];
-    
+
     // Only process metadata if there's actual content in the block
     if (metadataBlock.trim()) {
       const lines = metadataBlock.split('\n');
@@ -57,7 +60,7 @@ export function parseMetadata(content: string): { metadata: PromptMetadata; cont
         if (colonIndex > 0) {
           const key = line.substring(0, colonIndex).trim().toLowerCase();
           const value = line.substring(colonIndex + 1).trim();
-          
+
           if (key && value) {
             switch (key) {
               case 'description':
