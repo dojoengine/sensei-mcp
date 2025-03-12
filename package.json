@@ -4,7 +4,7 @@
   "description": "MCP Server for the Sensei dojo assistant.",
   "type": "module",
   "bin": {
-    "sensei-mcp": "build/src/main.js"
+    "sensei-mcp": "./bin/sensei-mcp.js"
   },
   "devDependencies": {
     "@eslint/js": "~9.17",
@@ -39,7 +39,8 @@
     "prettier": "prettier \"{src,__{tests}__}/**/*.{ts,mts}\" --config .prettierrc --write",
     "prettier:check": "prettier \"{src,__{tests}__}/**/*.{ts,mts}\" --config .prettierrc --check",
     "test:watch": "vitest unit",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "postinstall": "npm run prepare"
   },
   "license": "Apache-2.0",
   "dependencies": {
