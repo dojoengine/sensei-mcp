@@ -4,7 +4,7 @@
   "description": "MCP Server for the Sensei dojo assistant.",
   "type": "module",
   "bin": {
-    "sensei-mcp": "./bin/sensei-mcp.js"
+    "sensei-mcp": "build/src/main.js"
   },
   "devDependencies": {
     "@eslint/js": "~9.17",
