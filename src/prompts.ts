@@ -4,7 +4,10 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import Logger from './logger.js';
 import { loadFile } from './resources.js';
-import { CallToolResult, GetPromptResult } from '@modelcontextprotocol/sdk/types.js';
+import {
+  CallToolResult,
+  GetPromptResult,
+} from '@modelcontextprotocol/sdk/types.js';
 
 // Configuration
 export const PROMPTS_DIR = path.join(process.cwd(), 'prompts');
@@ -161,82 +164,85 @@ export async function processPromptContent(
  * Register a prompt with the server
  */
 export function registerPrompt(
-  server: McpServer, 
-  promptName: string, 
+  server: McpServer,
+  promptName: string,
   processedContent: string,
-  metadata: PromptMetadata
+  metadata: PromptMetadata,
 ): void {
   // Create a prompt handler that accepts the required arguments
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const promptHandler = (_args: undefined, _extra: Record<string, unknown>): GetPromptResult => ({
-    messages: [{
-      role: "user" as const,
-      content: {
-        type: "text" as const,
-        text: processedContent
-      }
-    }]
+  const promptHandler = (
+    _args: undefined,
+    _extra: Record<string, unknown>,
+  ): GetPromptResult => ({
+    messages: [
+      {
+        role: 'user' as const,
+        content: {
+          type: 'text' as const,
+          text: processedContent,
+        },
+      },
+    ],
   });
-  
+
   // Register as a regular prompt
   if (metadata.description) {
     // With description
-    server.prompt(
-      promptName,
-      metadata.description,
-      promptHandler
-    );
+    server.prompt(promptName, metadata.description, promptHandler);
   } else {
     // Without description
-    server.prompt(
-      promptName,
-      promptHandler
-    );
+    server.prompt(promptName, promptHandler);
   }
-  
+
   // If registerAsTool is true, also register as a tool
   if (metadata.registerAsTool) {
     const toolName = metadata.toolName || promptName;
-    
+
     // Extract variables from the prompt content for the tool
     const variables = extractVariables(processedContent);
-    Logger.debug(`Found variables in tool`, { 
-      name: toolName, 
-      variables 
+    Logger.debug(`Found variables in tool`, {
+      name: toolName,
+      variables,
     });
-    
+
     // Create a schema object directly
     const schemaObj: Record<string, z.ZodTypeAny> = {};
     for (const variable of variables) {
       schemaObj[variable] = z.string().optional();
     }
-    
+
     // Create tool handler that replaces variables and returns the result
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const toolHandler = async (inputs: Record<string, string>, _extra: Record<string, unknown>): Promise<CallToolResult> => {
+    const toolHandler = async (
+      inputs: Record<string, string>,
+      _extra: Record<string, unknown>,
+    ): Promise<CallToolResult> => {
       const span = Logger.span('toolExecution', { tool: toolName });
       try {
         let finalContent = processedContent;
-        
+
         // Replace each variable with its value
         for (const variable of variables) {
           const value = inputs[variable] || '';
           const pattern = new RegExp(`\\{\\{${variable}\\}\\}`, 'g');
           finalContent = finalContent.replace(pattern, value);
         }
-        
+
         // If there's a generic input and no specific {{input}} variable,
         // append it to the end
         if (inputs.input && !variables.includes('input')) {
           finalContent = `${finalContent}\n\n${inputs.input}`;
         }
-        
+
         span.end('success');
         return {
-          content: [{
-            type: "text" as const,
-            text: finalContent
-          }]
+          content: [
+            {
+              type: 'text' as const,
+              text: finalContent,
+            },
+          ],
         };
       } catch (error) {
         Logger.error(`Tool execution failed: ${toolName}`, error);
@@ -244,28 +250,19 @@ export function registerPrompt(
         throw error;
       }
     };
-    
+
     // Register the tool
     if (metadata.description) {
       // With description
-      server.tool(
-        toolName,
-        metadata.description,
-        schemaObj,
-        toolHandler
-      );
+      server.tool(toolName, metadata.description, schemaObj, toolHandler);
     } else {
       // Without description
-      server.tool(
-        toolName,
-        schemaObj,
-        toolHandler
-      );
+      server.tool(toolName, schemaObj, toolHandler);
     }
-    
-    Logger.info(`Registered prompt as tool`, { 
+
+    Logger.info(`Registered prompt as tool`, {
       name: toolName,
-      variables: variables.length > 0 ? variables : ['input']
+      variables: variables.length > 0 ? variables : ['input'],
     });
   }
 }
