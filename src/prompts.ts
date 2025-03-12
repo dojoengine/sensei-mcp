@@ -32,39 +32,57 @@ export interface PromptMetadata {
   description?: string;
   registerAsTool?: boolean;
   toolName?: string;
+  name?: string;
+  role?: string;
+  registerAsPrompt?: boolean;
 }
 
 /**
  * Parse metadata from prompt content
  */
-export function parseMetadata(content: string): {
-  metadata: PromptMetadata;
-  content: string;
-} {
-  const metadataMatch = content.match(METADATA_PATTERN);
+export function parseMetadata(content: string): { metadata: PromptMetadata; content: string } {
   const metadata: PromptMetadata = {};
+  const metadataMatch = content.match(METADATA_PATTERN);
 
   if (metadataMatch) {
-    const metadataStr = metadataMatch[1];
-    const metadataLines = metadataStr.split('\n');
+    const metadataBlock = metadataMatch[1];
+    
+    // Only process metadata if there's actual content in the block
+    if (metadataBlock.trim()) {
+      const lines = metadataBlock.split('\n');
 
-    for (const line of metadataLines) {
-      const [key, ...valueParts] = line.split(':');
-      if (key && valueParts.length > 0) {
-        const value = valueParts.join(':').trim();
-
-        switch (key.trim().toLowerCase()) {
-          case 'description':
-            metadata.description = value;
-            break;
-          case 'register_as_tool':
-          case 'registerastool':
-            metadata.registerAsTool = value.toLowerCase() === 'true';
-            break;
-          case 'tool_name':
-          case 'toolname':
-            metadata.toolName = value;
-            break;
+      for (const line of lines) {
+        // Split only on the first colon to preserve colons in values
+        const colonIndex = line.indexOf(':');
+        if (colonIndex > 0) {
+          const key = line.substring(0, colonIndex).trim().toLowerCase();
+          const value = line.substring(colonIndex + 1).trim();
+          
+          if (key && value) {
+            switch (key) {
+              case 'description':
+                metadata.description = value;
+                break;
+              case 'name':
+                metadata.name = value;
+                break;
+              case 'role':
+                metadata.role = value;
+                break;
+              case 'register_as_prompt':
+              case 'registerasprompt':
+                metadata.registerAsPrompt = value.toLowerCase() === 'true';
+                break;
+              case 'register_as_tool':
+              case 'registerastool':
+                metadata.registerAsTool = value.toLowerCase() === 'true';
+                break;
+              case 'tool_name':
+              case 'toolname':
+                metadata.toolName = value;
+                break;
+            }
+          }
         }
       }
     }
