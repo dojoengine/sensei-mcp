@@ -1,37 +1,3 @@
-/**
- * Some predefined delay values (in milliseconds).
- */
-export enum Delays {
-  Short = 500,
-  Medium = 2000,
-  Long = 5000,
-}
-
-/**
- * Returns a Promise<string> that resolves after a given time.
- *
- * @param {string} name - A name.
- * @param {number=} [delay=Delays.Medium] - A number of milliseconds to delay resolution of the Promise.
- * @returns {Promise<string>}
- */
-function delayedHello(
-  name: string,
-  delay: number = Delays.Medium,
-): Promise<string> {
-  return new Promise((resolve: (value?: string) => void) =>
-    setTimeout(() => resolve(`Hello, ${name}`), delay),
-  );
-}
-
-// Please see the comment in the .eslintrc.json file about the suppressed rule!
-// Below is an example of how to use ESLint errors suppression. You can read more
-// at https://eslint.org/docs/latest/user-guide/configuring/rules#disabling-rules
-
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/no-explicit-any
-export async function greeter(name: any) {
-  // The name parameter should be of type string. Any is used only to trigger the rule.
-  return await delayedHello(name, Delays.Long);
-}
 import fs from 'fs/promises';
 import path from 'path';
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -163,7 +129,7 @@ async function processPromptContent(content: string, resourceMap: Map<string, st
 /**
  * Load all prompts from the prompts directory
  */
-async function loadPrompts(server: McpServer, resourceMap: Map<string, string>) {
+async function loadPrompts(server: McpServer, resourceMap: Map<string, string>): Promise<void> {
   try {
     await fs.mkdir(PROMPTS_DIR, { recursive: true });
     const files = await fs.readdir(PROMPTS_DIR);
@@ -208,7 +174,7 @@ async function loadPrompts(server: McpServer, resourceMap: Map<string, string>) 
 /**
  * Main function to start the MCP server
  */
-async function main() {
+async function main(): Promise<void> {
   // Create the MCP server
   const server = new McpServer({
     name: "File Resource Server",
