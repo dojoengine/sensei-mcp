@@ -1,4 +1,9 @@
-This is the config preprompt that should be called whenever you (the LLM/agent) are trying to write configuration files / workspace files related to Dojo, scarb, cairo etc... If the user asks you to write anything related to that. You would call this tool first.  
+---
+description: Essential guidance for configuring Dojo projects. Use this when setting up Scarb.toml, creating dojo profile files, configuring permissions, setting up namespaces, or managing external contracts and dependencies.
+register_as_tool: true
+tool_name: dojo_config
+---
+
 When working with Dojo configuration, remember these critical points:
 
 1. Profile-based system:

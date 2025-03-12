@@ -1,4 +1,9 @@
-This is the tokens preprompt that should be called whenever you (the LLM/agent) are trying to write tokens (like erc20, erc721 etc..). If the user asks you to write anything related to that. You would call this tool first.  
+---
+description: Detailed guidance on implementing token standards in Dojo. Use this when creating ERC20, ERC721, or ERC1155 tokens, implementing token functionality, or integrating tokens with your Dojo game.
+register_as_tool: true
+tool_name: dojo_token
+---
+
 When working with token contracts in Dojo, remember these critical points:
 
 1. Dojo supports standard token implementations through OpenZeppelin components:

@@ -1,4 +1,9 @@
-This is the test preprompt that should be called whenever you (the LLM/agent) are trying to write tests. If the user asks you to write anything related to tests. You would call this tool first.  
+---
+description: Comprehensive guide for writing tests for Dojo applications. Use this when creating unit tests, integration tests, setting up test environments, or verifying the correctness of your Dojo systems and models.
+register_as_tool: true
+tool_name: dojo_test
+---
+
 When writing tests for Dojo systems, remember these critical points:
 
 1. Testing types:

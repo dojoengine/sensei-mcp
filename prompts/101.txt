@@ -1,4 +1,9 @@
-This is the tool you would use to get a basic understanding of Dojo.
+---
+description: Beginner-friendly introduction to Dojo development. Use this when starting a new Dojo project, understanding the basic workflow, or when you need a high-level overview of the Dojo development process and architecture.
+register_as_tool: true
+tool_name: dojo_101
+---
+
 When building a Dojo game, follow this essential workflow:
 
 1. Project Setup

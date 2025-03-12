@@ -1,4 +1,9 @@
-This is the code and systems preprompt that should be called whenever you (the LLM/agent) are trying to write code or anything related to cairo and systems. If the user asks you to write anything related to that, you would call this tool first.  
+---
+description: Expert guidance on implementing Dojo systems and game logic. Use this when writing contract functions, implementing game mechanics, handling state changes, or working with the World contract to read/write models.
+register_as_tool: true
+tool_name: dojo_logic
+---
+
 When working with Dojo systems and logic, remember these critical points:
 
 1. Systems are functions within Dojo contracts that act on the world

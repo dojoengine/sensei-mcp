@@ -1,4 +1,9 @@
-This is the model preprompt that should be called whenever you (the LLM/agent) are trying to write model. If the user asks you to write anything related to models. You would call this tool first.  
+---
+description: Specialized guidance for creating and working with Dojo models. Use this when you need to define data structures, create model schemas, implement model traits, or understand model relationships and constraints.
+register_as_tool: true
+tool_name: dojo_model
+---
+
 When working with Dojo models, remember these critical points:
 
 1. Models are Cairo structs with the #[dojo::model] attribute
