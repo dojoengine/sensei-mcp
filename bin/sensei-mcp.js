@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 
-// Use CommonJS require for better compatibility with npx
-const path = require('path');
-const { spawn } = require('child_process');
+// Use ES modules since package.json has "type": "module"
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { spawn } from 'child_process';
+
+// Get the directory of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Path to the built main.js file
-const mainPath = path.join(__dirname, '../build/src/main.js');
+const mainPath = join(__dirname, '../build/src/main.js');
 
 // Log startup information
 console.log('Starting Sensei MCP server...');

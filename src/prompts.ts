@@ -8,9 +8,29 @@ import {
   CallToolResult,
   GetPromptResult,
 } from '@modelcontextprotocol/sdk/types.js';
+import { fileURLToPath } from 'url';
+
+// Get the directory of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configuration
+// Use the package directory if it exists, otherwise use the current working directory
 export const PROMPTS_DIR = path.join(process.cwd(), 'prompts');
+
+// Try to use the package directory for prompts if it exists
+export async function getPromptsDir(): Promise<string> {
+  const packagePromptsDir = path.join(__dirname, '../../prompts');
+  try {
+    await fs.access(packagePromptsDir);
+    return packagePromptsDir;
+  } catch (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _error
+  ) {
+    return PROMPTS_DIR;
+  }
+}
 
 // Resource reference regex pattern (e.g., {{resource:path/to/resource}})
 export const RESOURCE_REF_PATTERN = /\{\{resource:(.*?)\}\}/g;
@@ -299,12 +319,14 @@ export async function loadPrompts(
   const span = Logger.span('loadPrompts');
 
   try {
-    await fs.mkdir(PROMPTS_DIR, { recursive: true });
-    Logger.debug(`Ensuring prompts directory exists`, { path: PROMPTS_DIR });
+    // Get the prompts directory
+    const promptsDir = await getPromptsDir();
+    await fs.mkdir(promptsDir, { recursive: true });
+    Logger.debug(`Ensuring prompts directory exists`, { path: promptsDir });
 
-    const files = await fs.readdir(PROMPTS_DIR);
+    const files = await fs.readdir(promptsDir);
     Logger.info(`Found ${files.length} potential prompt files`, {
-      directory: PROMPTS_DIR,
+      directory: promptsDir,
     });
 
     let loadedCount = 0;
@@ -319,7 +341,7 @@ export async function loadPrompts(
         continue;
       }
 
-      const filePath = path.join(PROMPTS_DIR, file);
+      const filePath = path.join(promptsDir, file);
       const stats = await fs.stat(filePath);
 
       if (stats.isDirectory()) {

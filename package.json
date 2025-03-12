@@ -6,6 +6,12 @@
   "bin": {
     "sensei-mcp": "./bin/sensei-mcp.js"
   },
+  "files": [
+    "bin/",
+    "build/",
+    "prompts/",
+    "resources/"
+  ],
   "devDependencies": {
     "@eslint/js": "~9.17",
     "@types/eslint__js": "~8.42",
@@ -39,8 +45,8 @@
     "prettier": "prettier \"{src,__{tests}__}/**/*.{ts,mts}\" --config .prettierrc --write",
     "prettier:check": "prettier \"{src,__{tests}__}/**/*.{ts,mts}\" --config .prettierrc --check",
     "test:watch": "vitest unit",
-    "prepare": "npm run build",
-    "postinstall": "npm run prepare"
+    "prepare": "npm run build && chmod +x bin/sensei-mcp.js",
+    "postinstall": "chmod +x bin/sensei-mcp.js"
   },
   "license": "Apache-2.0",
   "dependencies": {

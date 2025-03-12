@@ -5,9 +5,28 @@ import {
   ResourceTemplate,
 } from '@modelcontextprotocol/sdk/server/mcp.js';
 import Logger from './logger.js';
+import { fileURLToPath } from 'url';
+
+// Get the directory of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configuration
 export const RESOURCES_DIR = path.join(process.cwd(), 'resources');
+
+// Try to use the package directory for resources if it exists
+export async function getResourcesDir(): Promise<string> {
+  const packageResourcesDir = path.join(__dirname, '../../resources');
+  try {
+    await fs.access(packageResourcesDir);
+    return packageResourcesDir;
+  } catch (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _error
+  ) {
+    return RESOURCES_DIR;
+  }
+}
 
 /**
  * Load a file's content from disk
@@ -20,9 +39,9 @@ export async function loadFile(filePath: string): Promise<string> {
     span.end('success');
     return content;
   } catch (error) {
-    Logger.error(`Failed to load file: ${filePath}`, error);
+    Logger.error(`Failed to load file`, error, { path: filePath });
     span.end('error');
-    throw new Error(`Failed to load file: ${filePath}`);
+    throw error;
   }
 }
 
@@ -36,34 +55,39 @@ export async function loadResources(
   const resourceMap = new Map<string, string>();
 
   try {
-    await fs.mkdir(RESOURCES_DIR, { recursive: true });
-    Logger.debug(`Ensuring resources directory exists`, {
-      path: RESOURCES_DIR,
-    });
+    // Get the resources directory
+    const resourcesDir = await getResourcesDir();
+    await fs.mkdir(resourcesDir, { recursive: true });
+    Logger.debug(`Ensuring resources directory exists`, { path: resourcesDir });
 
-    const files = await fs.readdir(RESOURCES_DIR, { recursive: true });
+    const files = await fs.readdir(resourcesDir);
     Logger.info(`Found ${files.length} potential resource files`, {
-      directory: RESOURCES_DIR,
+      directory: resourcesDir,
     });
 
     let loadedCount = 0;
 
     for (const file of files) {
-      const fileSpan = Logger.span('processResourceFile', { file });
+      const resourceSpan = Logger.span('processResourceFile', { file });
 
-      // Skip directories and non-text files
-      const filePath = path.join(RESOURCES_DIR, file);
+      if (!file.endsWith('.txt')) {
+        Logger.trace(`Skipping non-txt file`, { file });
+        resourceSpan.end('skipped_non_txt');
+        continue;
+      }
+
+      const filePath = path.join(resourcesDir, file);
       const stats = await fs.stat(filePath);
 
       if (stats.isDirectory()) {
         Logger.trace(`Skipping directory`, { path: filePath });
-        fileSpan.end('skipped_directory');
+        resourceSpan.end('skipped_directory');
         continue;
       }
 
       // Convert file path to resource URI
       // e.g., resources/docs/intro.txt -> docs/intro
-      const relPath = path.relative(RESOURCES_DIR, filePath);
+      const relPath = path.relative(resourcesDir, filePath);
       const resourcePath = relPath.replace(/\.[^/.]+$/, ''); // Remove extension
       const resourceUri = `file://${resourcePath}`;
 
@@ -91,12 +115,12 @@ export async function loadResources(
           uri: resourceUri,
           size: content.length,
         });
-        fileSpan.end('success');
+        resourceSpan.end('success');
       } catch (error) {
         Logger.error(`Failed to process resource file`, error, {
           path: filePath,
         });
-        fileSpan.end('error');
+        resourceSpan.end('error');
       }
     }
 
@@ -110,7 +134,7 @@ export async function loadResources(
         const span = Logger.span('dynamicResourceLoad', { path: params.path });
         try {
           const resourcePath = params.path;
-          const filePath = path.join(RESOURCES_DIR, resourcePath + '.txt');
+          const filePath = path.join(resourcesDir, resourcePath + '.txt');
           const content = await loadFile(filePath);
           span.end('success');
           return {

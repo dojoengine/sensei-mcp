@@ -5,7 +5,7 @@ import { loadResources } from './resources.js';
 import { loadPrompts } from './prompts.js';
 import fs from 'fs/promises';
 import path from 'path';
-import { PROMPTS_DIR, parseMetadata } from './prompts.js';
+import { getPromptsDir, parseMetadata } from './prompts.js';
 
 // Server configuration
 const SERVER_CONFIG = {
@@ -20,8 +20,11 @@ export async function startServer(): Promise<void> {
   const span = Logger.span('startServer');
 
   try {
+    // Get the prompts directory
+    const promptsDir = await getPromptsDir();
+    
     // Load the sensei prompt content to use as server instructions
-    const senseiPromptPath = path.join(PROMPTS_DIR, 'sensei.txt');
+    const senseiPromptPath = path.join(promptsDir, 'sensei.txt');
     let senseiInstructions = '';
 
     try {

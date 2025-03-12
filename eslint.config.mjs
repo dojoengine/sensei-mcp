@@ -63,4 +63,15 @@ export default tseslint.config(
       },
     },
   },
+  // Configuration for bin directory
+  {
+    files: ['bin/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        console: 'readonly',
+        process: 'readonly',
+      },
+    },
+  },
 );
