@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "MCP Server for the Sensei dojo assistant.",
   "type": "module",
+  "bin": {
+    "sensei-mcp": "./bin/sensei-mcp.js"
+  },
   "devDependencies": {
     "@eslint/js": "~9.17",
     "@types/eslint__js": "~8.42",
@@ -35,7 +38,8 @@
     "test:coverage": "vitest run integration --config __tests__/vitest.config.ts --coverage.enabled --coverage.all",
     "prettier": "prettier \"{src,__{tests}__}/**/*.{ts,mts}\" --config .prettierrc --write",
     "prettier:check": "prettier \"{src,__{tests}__}/**/*.{ts,mts}\" --config .prettierrc --check",
-    "test:watch": "vitest unit"
+    "test:watch": "vitest unit",
+    "prepare": "npm run build"
   },
   "license": "Apache-2.0",
   "dependencies": {
