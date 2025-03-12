@@ -22,7 +22,7 @@ export async function startServer(): Promise<void> {
   try {
     // Get the prompts directory
     const promptsDir = await getPromptsDir();
-    
+
     // Load the sensei prompt content to use as server instructions
     const senseiPromptPath = path.join(promptsDir, 'sensei.txt');
     let senseiInstructions = '';
