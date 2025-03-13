@@ -149,13 +149,6 @@ fn something(){
 World Interface
 The world exposes an interface which can be interacted with by any client. It is worth noting here that as a developer you don't deploy this world, it is deployed when you migrate your project as it is part of the dojo-core library.
 
-However, you can interact with the world contract directly if you need to for instance to use the uuid function as it is often useful to generate unique IDs for entities.
-
-
-let game_id = world.uuid();
-Here's the full world's API for low level access:
-
-
 #[starknet::interface]
 pub trait IWorld<T> {
     /// Returns the resource from its selector.
@@ -166,13 +159,6 @@ pub trait IWorld<T> {
     /// # Returns
     ///   * `Resource` - the resource data associated with the selector.
     fn resource(self: @T, selector: felt252) -> Resource;
- 
-    /// Issues an autoincremented id to the caller.
-    /// This functionalities is useful to generate unique, but sequential ids.
-    ///
-    /// Note: This functionalities may impact performances since transaction paralellisation can't
-    /// be achieved since the same storage slot is being written.
-    fn uuid(ref self: T) -> usize;
  
     /// Returns the metadata of the resource.
     ///
