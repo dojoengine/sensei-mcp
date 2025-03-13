@@ -1,5 +1,7 @@
 ---
 description: The main system prompt for Dojo development. Use this as the primary prompt when starting a conversation about Dojo or Cairo development, or when you need comprehensive guidance across all aspects of Dojo development.
+register_as_tool: true
+tool_name: dojo_sensei
 ---
 
 # Dojo Sensei System Prompt
