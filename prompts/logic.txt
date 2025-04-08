@@ -7,40 +7,51 @@ tool_name: dojo_logic
 When working with Dojo systems and logic, remember these critical points:
 
 1. Systems are functions within Dojo contracts that act on the world
-2. Use self.world(<NAMESPACE>) to access the world from systems
-3. Systems need explicit permissions to write to models
-4. Keep systems small, focused, and stateless when possible
-5. For reading models:
+2. Use self.world(@"<NAMESPACE>") to access the world from systems. No need to create any abstraction for this.
+3. Whenever using the self.world(@"<NAMESPACE>") to access the dojo world. 
+ - For reading and writing to world model - make sure you import 
+    use dojo::model::{ModelStorage};
+ - For emitting events to world - make sure you import   
+    use dojo::event::EventStorage;   
+4. Don't use any reserved function names to build your own functions
+5. Systems need explicit permissions to write to models
+6. Keep systems small, focused, and stateless when possible
+7. You will need import the required variables inside the contract structure and not outside it. Any variable required by any 
+function or code snippet outside the contract will need to be imported at the top of the file seperately. The contract will need
+another import since external imports don't come under the contract structure.
+8. Any model, trait or constant which is imported in any other file needs to be declared as public.
+
+9. For reading models:
    - Use world.read_model(key) to retrieve a model
    - For multiple keys, provide them as a tuple: world.read_model((key1, key2))
    - Default values (0) are returned for non-existent models
 
-6. For writing models:
+10. For writing models:
    - Use world.write_model(@model) to update state
    - Remember to update all relevant models in a transaction
 
-7. For validation:
+11. For validation:
    - Use asserts for validating conditions and providing error messages
    - Always validate inputs and game state before making changes
    - Include descriptive error messages in asserts
 
-8. For events:
+12. For events:
    - Use world.emit_event(@Event { ... }) for custom events
    - Custom events must have #[dojo::event] attribute and at least one #[key]
    - The world automatically emits events for model updates so you dont need to emit any event for that.
-
-9. For advanced operations:
+   - You don't have to define events again inside the #[dojo::contract] decorator.
+13. For advanced operations:
    - Use read_member/write_member for accessing specific model fields
    - Use read_schema for efficiently reading parts of models
-10. Make sure you have correct imports when reading models etc.. like importing dojo::model::ModelStorage when write_model or read_model
+14. Make sure you have correct imports when reading models etc.. like importing dojo::model::ModelStorage when write_model or read_model
    - ALSO MAKE SURE to use the correct project name when importing project files, if the project name in Scarb.toml is dojo_starter, you can use dojo_starter::models::Position etc.. 
    - If you want to be sure you can use the crate::models::Position notation
-11. Make sure you retrieve the world correctly. Always specify the chosen namespace like self.world(@"namespace")
-12. Make sure that your world reference is mutable when you are writing models. `let mut world = self.world(@"namespace");`
-13. When doing conversions between integers. Keep in mind that going from types like ContractAddress -> u32 or the opposite is impossible.
+15. Make sure you retrieve the world correctly. Always specify the chosen namespace like self.world(@"namespace")
+16. Make sure that your world reference is mutable when you are writing models. `let mut world = self.world(@"namespace");`
+17. When doing conversions between integers. Keep in mind that going from types like ContractAddress -> u32 or the opposite is impossible.
    - You will need to convert the ContractAddress into a Felt and then into a u32. Also remember that conversions to smaller types, like a Felt to a u32 need to use try_into().unwrap()
-14. ALWAYS MAKE sure that your world_default or self.world(@"<NAMESPACE>") is correct. You should specify the correct namespace to use, which should correspond to the one in your profiles/config files.
-15. When dealing with packed felts or bit shifts. You cannot use bit shifts so make sure TO ALWAYS use multiplication and divide to shift. Here is an example:
+18. ALWAYS MAKE sure that your world_default or self.world(@"<NAMESPACE>") is correct. You should specify the correct namespace to use, which should correspond to the one in your profiles/config files.
+19. When dealing with packed felts or bit shifts. You cannot use bit shifts so make sure TO ALWAYS use multiplication and divide to shift. Here is an example:
 fn pack_flipped_data(address: felt252, powerup: PowerUp, team: u8) -> felt252 {
     let address_bits: u256 = address.into();
     let (powerup_type, powerup_data) = match powerup {
@@ -71,7 +82,7 @@ fn unpack_flipped_data(flipped: felt252) -> (felt252, PowerUp, u8) {
     
     (address, powerup, team)
 }
-17. To retrieve contract addresses of other systems, you can use the world.dns("contract_name") like this:
+20. To retrieve contract addresses of other systems, you can use the world.dns("contract_name") like this:
 // At this point, using the DNS will return the resource from the "ns2"
 // namespace, if it exists.
 if let Some((contract_address, class_hash)) = world.dns("my_contract") {
@@ -79,10 +90,23 @@ if let Some((contract_address, class_hash)) = world.dns("my_contract") {
     // Return dispatcher etc.
 }
 YOU NEED TO USE THE WorldStorageTrait to have access to that.
-18. Be mindful of moving variables too. Let's say we have an array and we use its len in a struct, we should store the len in a variable of its own and then reference that in the struct.
-19. MAKE SURE that type conversions from for example u64 to u32 are unsafe! So you will need to use try_into() and unwrap it or expect instead of a simple into().
-20. Arrays in Cairo are immutable, this means that once you append something to an array you CANNOT MUTATE it afterwards.
-21. Desnap (*) operator in cairo can only be used to dereference snapshots (@). Snapshot is an immutable view of a value at a certain point in time
+21. Be mindful of moving variables too. Let's say we have an array and we use its len in a struct, we should store the len in a variable of its own and then reference that in the struct.
+22. MAKE SURE that type conversions from for example u64 to u32 are unsafe! So you will need to use try_into() and unwrap it or expect instead of a simple into().
+23. Arrays in Cairo are immutable, this means that once you append something to an array you CANNOT MUTATE it afterwards.
+24. Desnap (*) operator in cairo can only be used to dereference snapshots (@). Snapshot is an immutable view of a value at a certain point in time
+
+## Documentation Cross-Check
+
+When implementing systems and game logic, you should cross-check your code against the official Dojo documentation:
+
+- [World Contract Overview](https://www.dojoengine.org/framework/world)
+- [World API](https://www.dojoengine.org/framework/world/api)
+- [Systems](https://www.dojoengine.org/framework/world/systems)
+- [Events](https://www.dojoengine.org/framework/world/events)
+- [Authorization](https://www.dojoengine.org/framework/authorization)
+- [Testing](https://www.dojoengine.org/framework/testing)
+
+This will ensure your code follows the latest best practices and standards for Dojo system and game logic implementation.
 
 You should refer to this most up to date example here
 

@@ -51,6 +51,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.7.0",
+    "node-fetch": "^3.3.2",
     "tslib": "~2.8",
     "zod": "^3.24.2"
   }

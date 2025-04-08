@@ -38,4 +38,12 @@ When writing tests for Dojo systems, remember these critical points:
    - State changes after system calls
    - Error conditions with proper assertions
 
+## Documentation Cross-Check
+
+For more detailed information, check the official Dojo documentation:
+
+- [Testing Framework](https://www.dojoengine.org/framework/testing)
+- [Cairo Testing Cheat Codes](https://www.dojoengine.org/framework/testing-cheat-codes)
+- [Dojo Cairo Test Library](https://github.com/dojoengine/dojo/tree/main/crates/dojo/core-cairo-test)
+
 {{resource:test}}
