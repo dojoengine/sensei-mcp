@@ -7,9 +7,9 @@ tool_name: dojo_101
 When building a Dojo game, follow this essential workflow:
 
 1. Project Setup
-   - Use `sozo init <project-name>` to create a new Dojo project
-   - Understand the project structure (Scarb.toml, src directory, etc.)
-   - Configure your Scarb.toml with proper dependencies and metadata
+   - Use `sozo init <project-name>` to create a new cairo project which uses the dojo framework.
+   - Understand the project structure which is created from the sozo init command or if the project already exists then understand the project structure (Scarb.toml, src directory, etc.)
+   - Configure your Scarb.toml which you get from the sozo setup with proper dependencies and metadata
 
 2. Define Models (src/models.cairo)
    - Models are the foundation of your game state

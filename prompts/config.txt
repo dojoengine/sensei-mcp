@@ -15,6 +15,7 @@ When working with Dojo configuration, remember these critical points:
    - Set correct cairo-version
    - Configure build-external-contracts for any external contracts like ERCs
    - Use [profile.<PROFILE>] sections for custom profiles
+   - Try using the latest version of all the dependencies (cairo, dojo, starknet)
 
 3. For dojo_<PROFILE>.toml:
    - Configure [world] section with metadata (name, description, etc.)

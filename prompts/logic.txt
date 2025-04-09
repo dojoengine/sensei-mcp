@@ -16,10 +16,10 @@ When working with Dojo systems and logic, remember these critical points:
 4. Don't use any reserved function names to build your own functions
 5. Systems need explicit permissions to write to models
 6. Keep systems small, focused, and stateless when possible
-7. You will need import the required variables inside the contract structure and not outside it. Any variable required by any 
-function or code snippet outside the contract will need to be imported at the top of the file seperately. The contract will need
-another import since external imports don't come under the contract structure.
-8. Any model, trait or constant which is imported in any other file needs to be declared as public.
+7. A contract is identified by the macro #[dojo::contract]. You will need to import the values/model/event which 
+you need in writing the implementation of contract inside the contract body again. No imports outside of this body 
+will be considered valid for the contract.
+8. Any model, trait or constant which is imported in any other file needs to be declared as public unless required.
 
 9. For reading models:
    - Use world.read_model(key) to retrieve a model
@@ -94,6 +94,9 @@ YOU NEED TO USE THE WorldStorageTrait to have access to that.
 22. MAKE SURE that type conversions from for example u64 to u32 are unsafe! So you will need to use try_into() and unwrap it or expect instead of a simple into().
 23. Arrays in Cairo are immutable, this means that once you append something to an array you CANNOT MUTATE it afterwards.
 24. Desnap (*) operator in cairo can only be used to dereference snapshots (@). Snapshot is an immutable view of a value at a certain point in time
+25. When planning or starting a new Dojo project, ALWAYS use the latest Dojo version and its compatible Cairo version. To be on the right direction, try initialising a 
+new project using `sozo init` under the contracts directory. This will help you setup a boilerplate which you can
+start to modify and edit and add new functionalities following the same structure.
 
 ## Documentation Cross-Check
 

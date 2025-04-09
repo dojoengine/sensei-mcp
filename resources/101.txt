@@ -1,5 +1,6 @@
 Dojo in 15 minutes or less
-To start, let's create a new project to run locally on your machine.
+To start, let's create a new project to run locally on your machine. We will use sozo
+init command to setup a cairo project which uses the dojo framework.
 
 
 sozo init dojo-starter

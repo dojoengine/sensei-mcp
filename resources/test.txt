@@ -13,6 +13,9 @@ It is best practise to include unit tests in the same file as the model / system
 Lets show a model test example from the dojo-starter:
 
 
+Any model can be imported as their name prefixed by a `_m` to intialise when defining the namespace
+Any event can be imported as their name prefixed by a `_e` to intialise when defining the namespace
+
 // models.cairo
  
 // ...
