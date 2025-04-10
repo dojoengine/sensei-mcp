@@ -31,4 +31,16 @@ When working with Dojo models, remember these critical points:
 9. Make sure members, structs, enums etc.. are correctly visible. You should make them public by putting `pub` in front of them, for ones that can be accessed from systems.
 10. YOU CANNOT use the Copy trait when dealing with Array or ByteArray. If an array is in a struct, dont put the Copy trait on it, same for upper level parents. Be mindful of traits you derive
 
+## Documentation Cross-Check
+
+When implementing models, you should cross-check your code against the official Dojo documentation:
+
+- [Models Overview](https://www.dojoengine.org/framework/models)
+- [Model Entities](https://www.dojoengine.org/framework/models/entities)
+- [Model Introspection](https://www.dojoengine.org/framework/models/introspect)
+- [Model Upgrades](https://www.dojoengine.org/framework/models/upgrades)
+- [Enums in Models](https://www.dojoengine.org/framework/models/enum)
+
+This will ensure your code follows the latest best practices and standards for Dojo model implementation.
+
 {{resource:model}}

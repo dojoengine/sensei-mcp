@@ -15,6 +15,7 @@ When working with Dojo configuration, remember these critical points:
    - Set correct cairo-version
    - Configure build-external-contracts for any external contracts like ERCs
    - Use [profile.<PROFILE>] sections for custom profiles
+   - Try using the latest version of all the dependencies (cairo, dojo, starknet)
 
 3. For dojo_<PROFILE>.toml:
    - Configure [world] section with metadata (name, description, etc.)
@@ -46,6 +47,19 @@ When working with Dojo configuration, remember these critical points:
    - Incorrect namespace mappings
    - Missing or incorrect permissions in [writers]/[owners]
    - Improper initialization arguments
+
+## Documentation Cross-Check
+
+When configuring your Dojo project, you should cross-check your configuration against the official Dojo documentation:
+
+- [Dojo Configuration Guide](https://www.dojoengine.org/framework/config)
+- [World Contract Configuration](https://www.dojoengine.org/framework/world)
+- [Authorization Configuration](https://www.dojoengine.org/framework/authorization)
+- [Sozo Deployment Tool](https://www.dojoengine.org/toolchain/sozo)
+- [Katana Configuration](https://www.dojoengine.org/toolchain/katana/config_file)
+- [Torii Configuration](https://www.dojoengine.org/toolchain/torii/config_file)
+
+This will ensure your configuration follows the latest best practices and standards for Dojo project setup and deployment.
 
 You should refer to the most up to date version, here is the latest up to date examples:
 

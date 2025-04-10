@@ -202,6 +202,163 @@ export async function processPromptContent(
 }
 
 /**
+ * Add a Dojo documentation nudge to a prompt response for specific code-related topics
+ */
+export function addDojoDocsNudge(content: string, topic?: string): string {
+  // Keywords that indicate code writing or verification tasks
+  const modelKeywords = [
+    'model',
+    'models',
+    'entity',
+    'entities',
+    'data structure',
+    'schema',
+  ];
+  const logicKeywords = [
+    'system',
+    'systems',
+    'logic',
+    'game logic',
+    'function',
+    'functions',
+    'contract',
+  ];
+  const configKeywords = [
+    'config',
+    'configuration',
+    'scarb',
+    'toml',
+    'profile',
+    'deployment',
+  ];
+
+  // Check if the content contains any of the keywords
+  const hasModelKeywords = modelKeywords.some((keyword) =>
+    content.toLowerCase().includes(keyword.toLowerCase()),
+  );
+  const hasLogicKeywords = logicKeywords.some((keyword) =>
+    content.toLowerCase().includes(keyword.toLowerCase()),
+  );
+  const hasConfigKeywords = configKeywords.some((keyword) =>
+    content.toLowerCase().includes(keyword.toLowerCase()),
+  );
+
+  // Customize nudge based on the specific topic
+  let nudge = '';
+
+  if (topic) {
+    // If a specific topic is provided
+    if (topic.toLowerCase().includes('model')) {
+      nudge =
+        '\n\n📚 **Verify your model code against the [Dojo Models documentation](https://www.dojoengine.org/framework/models). Make sure to implement proper traits and follow entity relationships best practices.**';
+    } else if (
+      topic.toLowerCase().includes('logic') ||
+      topic.toLowerCase().includes('system')
+    ) {
+      nudge =
+        '\n\n📚 **Verify your system logic against the [Dojo Systems documentation](https://www.dojoengine.org/framework/world/systems). Ensure correct world state management and authorization patterns.**';
+    } else if (topic.toLowerCase().includes('config')) {
+      nudge =
+        '\n\n📚 **Verify your configuration against the [Dojo Config documentation](https://www.dojoengine.org/framework/config). Check for proper Scarb.toml setup and profile configuration.**';
+    }
+  } else {
+    // Determine topic based on keyword presence
+    if (hasModelKeywords) {
+      nudge =
+        '\n\n📚 **Verify your model code against the [Dojo Models documentation](https://www.dojoengine.org/framework/models). Make sure to implement proper traits and follow entity relationships best practices.**';
+    } else if (hasLogicKeywords) {
+      nudge =
+        '\n\n📚 **Verify your system logic against the [Dojo Systems documentation](https://www.dojoengine.org/framework/world/systems). Ensure correct world state management and authorization patterns.**';
+    } else if (hasConfigKeywords) {
+      nudge =
+        '\n\n📚 **Verify your configuration against the [Dojo Config documentation](https://www.dojoengine.org/framework/config). Check for proper Scarb.toml setup and profile configuration.**';
+    }
+  }
+
+  // Add a general Dojo nudge if no specific topic was detected
+  if (!nudge && (hasModelKeywords || hasLogicKeywords || hasConfigKeywords)) {
+    nudge =
+      '\n\n📚 **Verify your Dojo code against the [official documentation](https://www.dojoengine.org/overview). Follow best practices for building provable games and applications.**';
+  }
+
+  return nudge ? content + nudge : content;
+}
+
+/**
+ * Add documentation references to Dojo-related content
+ */
+export function addDojoDocReferences(content: string): string {
+  // Don't modify content that already has documentation references
+  if (
+    content.includes('dojoengine.org/framework') ||
+    content.includes('dojoengine.org/toolchain')
+  ) {
+    return content;
+  }
+
+  // Check for different types of Dojo content
+  const hasModelContent =
+    content.includes('#[dojo::model]') ||
+    content.includes('#[key]') ||
+    content.includes('derive(Model') ||
+    content.includes('derive(Drop, Serde)');
+
+  const hasSystemContent =
+    content.includes('#[dojo::contract]') ||
+    content.includes('world.read_model') ||
+    content.includes('world.write_model') ||
+    content.includes('self.world(');
+
+  const hasConfigContent =
+    content.includes('Scarb.toml') ||
+    content.includes('dojo_') ||
+    content.includes('[writers]') ||
+    content.includes('[target.starknet-contract]');
+
+  // Add appropriate documentation references based on content type
+  if (hasModelContent) {
+    return (
+      content +
+      '\n\n---\n**Reference Documentation:**\n' +
+      '- [Models Overview](https://www.dojoengine.org/framework/models)\n' +
+      '- [Entities in Dojo](https://www.dojoengine.org/framework/models/entities)\n' +
+      '- [Model Introspection](https://www.dojoengine.org/framework/models/introspect)'
+    );
+  } else if (hasSystemContent) {
+    return (
+      content +
+      '\n\n---\n**Reference Documentation:**\n' +
+      '- [Systems](https://www.dojoengine.org/framework/world/systems)\n' +
+      '- [World API](https://www.dojoengine.org/framework/world/api)\n' +
+      '- [Authorization](https://www.dojoengine.org/framework/authorization)'
+    );
+  } else if (hasConfigContent) {
+    return (
+      content +
+      '\n\n---\n**Reference Documentation:**\n' +
+      '- [Configuration Guide](https://www.dojoengine.org/framework/config)\n' +
+      '- [Sozo Commands](https://www.dojoengine.org/toolchain/sozo)\n' +
+      '- [World Contract](https://www.dojoengine.org/framework/world)'
+    );
+  }
+
+  // If content has cairo code but not specific Dojo patterns, add general Dojo reference
+  if (
+    content.includes('fn ') &&
+    content.includes('struct ') &&
+    content.includes('impl ')
+  ) {
+    return (
+      content +
+      '\n\n---\n**Reference Documentation:**\n' +
+      '- [Dojo Documentation](https://www.dojoengine.org/overview)'
+    );
+  }
+
+  return content;
+}
+
+/**
  * Register a prompt with the server
  */
 export function registerPrompt(
@@ -276,6 +433,23 @@ export function registerPrompt(
         if (inputs.input && !variables.includes('input')) {
           finalContent = `${finalContent}\n\n${inputs.input}`;
         }
+
+        // Add the Dojo documentation nudge if this is a Dojo-related tool
+        // We determine this based on the tool name or the input content
+        const topic = toolName.toLowerCase().includes('dojo')
+          ? toolName.replace('dojo_', '')
+          : undefined;
+
+        // Use the input content for context if available
+        const inputContext = inputs.input || '';
+
+        // If this is for Dojo, first add documentation references to the content
+        if (toolName.toLowerCase().includes('dojo')) {
+          finalContent = addDojoDocReferences(finalContent);
+        }
+
+        // Then add the documentation nudge based on the content and topic
+        finalContent = addDojoDocsNudge(finalContent + inputContext, topic);
 
         span.end('success');
         return {

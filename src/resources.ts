@@ -6,6 +6,7 @@ import {
 } from '@modelcontextprotocol/sdk/server/mcp.js';
 import Logger from './logger.js';
 import { fileURLToPath } from 'url';
+import fetch from 'node-fetch';
 
 // Get the directory of the current module
 const __filename = fileURLToPath(import.meta.url);
@@ -46,6 +47,27 @@ export async function loadFile(filePath: string): Promise<string> {
 }
 
 /**
+ * Fetch content from a URL
+ */
+export async function fetchContentFromUrl(url: string): Promise<string> {
+  const span = Logger.span('fetchContentFromUrl', { url });
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const content = await response.text();
+    span.end('success');
+    return content;
+  } catch (error) {
+    Logger.error(`Failed to fetch content from URL`, error, { url });
+    span.end('error');
+    throw error;
+  }
+}
+
+/**
  * Load all resources from the resources directory
  */
 export async function loadResources(
@@ -67,6 +89,7 @@ export async function loadResources(
 
     let loadedCount = 0;
 
+    // Load local resources
     for (const file of files) {
       const resourceSpan = Logger.span('processResourceFile', { file });
 
@@ -122,6 +145,39 @@ export async function loadResources(
         });
         resourceSpan.end('error');
       }
+    }
+
+    // Load Dojo engine documentation URL
+    try {
+      const dojoUrl = 'https://www.dojoengine.org/llms.txt';
+      const dojoSpan = Logger.span('fetchDojoResource', { url: dojoUrl });
+      const dojoContent = await fetchContentFromUrl(dojoUrl);
+      const dojoResourceUri = 'https://www.dojoengine.org/llms.txt';
+
+      resourceMap.set(dojoResourceUri, dojoContent);
+      loadedCount++;
+
+      // Register the Dojo resource with the server
+      server.resource(
+        'resource-dojo-documentation',
+        dojoResourceUri,
+        async (uri) => ({
+          contents: [
+            {
+              uri: uri.href,
+              text: dojoContent,
+            },
+          ],
+        }),
+      );
+
+      Logger.info(`Registered external resource`, {
+        uri: dojoResourceUri,
+        size: dojoContent.length,
+      });
+      dojoSpan.end('success');
+    } catch (error) {
+      Logger.error(`Failed to load Dojo documentation`, error);
     }
 
     Logger.info(`Successfully loaded resources`, { total: loadedCount });

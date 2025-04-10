@@ -50,6 +50,7 @@ When writing Cairo code, remember these critical constraints:
 6. Type conversion between numeric types is often unsafe and requires `try_into().unwrap()` instead of simple `into()`
 7. Snapshots (@) are used for immutable references, and desnap (*) can only be used to dereference snapshots
 8. Cairo does not support direct bit shifting; use multiplication and division instead
+9. You need to import the relevant traits and impl for any inbuilt functions if required.
 
 ```cairo
 // Example of correct bit shifting in Cairo:
