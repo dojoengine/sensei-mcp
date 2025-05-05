@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/dojoengine-sensei-mcp-badge.png)](https://mseep.ai/app/dojoengine-sensei-mcp)
+
 # Sensei MCP
 
 Sensei MCP is a Model Context Protocol (MCP) server that provides expert guidance for Dojo and Cairo development on Starknet. It serves as your personal Dojo Sensei, offering specialized knowledge and assistance for building onchain worlds using the Dojo Entity Component System (ECS) framework.
