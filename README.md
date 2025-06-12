@@ -16,7 +16,7 @@ Sensei MCP is a Model Context Protocol (MCP) server that provides expert guidanc
 To add Sensei to your Cursor IDE:
 
 1. Open Cursor command palette (⌘+Shift+P)
-2. Type in "Cursor Settings" to open up the settings tab
+2. Type in "Cursor Settings" to open up the settings menu
 3. Navigate to "MCP Tools" and click "New MCP Server"
 4. Add the following configuration to `mcp.json`:
 ```json
@@ -33,9 +33,9 @@ To add Sensei to your Cursor IDE:
 5. Save the file
 
 Cursor will attempt to initialise the server.
-Once initialised, the window should look like this:
+Once initialised, the menu should look like this:
 
-[Insert image asset]
+<img width="647" alt="Screenshot 2025-06-12 at 6 04 39 PM" src="https://github.com/user-attachments/assets/4c42ad84-39ce-49a3-bb92-bf3573693e8b" />
 
 Once installed, Cursor Agent will automatically query Sensei when appropriate.
 Follow these best practices for optimal results:
