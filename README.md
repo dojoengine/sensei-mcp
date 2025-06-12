@@ -9,31 +9,36 @@ Sensei MCP is a Model Context Protocol (MCP) server that provides expert guidanc
 - **Smart Contract Development**: Best practices for Starknet smart contracts
 - **Specialized Tools**: Access topic-specific tools for models, systems, testing, and more
 
-## Installation
+## Using with Cursor
 
-### Using with Cursor
+> See the [official Cursor docs](https://docs.cursor.com/context/model-context-protocol#manual-configuration) for more information on installing and using MCP servers.
 
 To add Sensei to your Cursor IDE:
 
-1. Open Cursor Settings (⌘+,)
-2. Navigate to the "MCP" section
-3. Click "Add New MCP"
-4. Configure as follows:
-   - **Name**: Sensei (or any name you prefer)
-   - **Type**: Command
-   - **Command**: `npx github:dojoengine/sensei-mcp`
-5. Click "Save"
+1. Open Cursor command palette (⌘+Shift+P)
+2. Type in "Cursor Settings" to open up the settings tab
+3. Navigate to "MCP Tools" and click "New MCP Server"
+4. Add the following configuration to `mcp.json`:
+```json
+{
+  "mcpServers": {
+    "sensei": {
+      "type": "command",
+      "command": "npx github:dojoengine/sensei-mcp",
+      "enabled": true
+    }
+  }
+}
+```
+5. Save the file
 
-Once configured, you can access Sensei by:
-- Opening the command palette (⌘+K)
-- Typing "MCP" and selecting "Open MCP Chat"
-- Selecting "Sensei" from the MCP dropdown
+Cursor will attempt to initialise the server.
+Once initialised, the window should look like this:
 
-Sensei will provide specialized assistance for your Dojo and Cairo development questions, with deep knowledge of Starknet development best practices.
+[Insert image asset]
 
-### Using with Cursor Agent
-
-When using Sensei with Cursor Agent, follow these best practices for optimal results:
+Once installed, Cursor Agent will automatically query Sensei when appropriate.
+Follow these best practices for optimal results:
 
 1. **Always mention the specialized tools**: Explicitly ask the agent to use Sensei's specialized tools (e.g., "Please use the dojo_model tool to help me create a model").
 
@@ -50,7 +55,7 @@ When using Sensei with Cursor Agent, follow these best practices for optimal res
 
 Example prompt:
 ```
-I'm building a Dojo game. First, please use the dojo_101 tool to help me set up the project structure. 
+I'm building a Dojo game. First, please use the dojo_101 tool to help me set up the project structure.
 After that, I'll need help creating the models using the dojo_model tool.
 ```
 
