@@ -11,6 +11,8 @@ Sensei MCP is a Model Context Protocol (MCP) server that provides expert guidanc
 
 ## Using with Cursor
 
+### Installation
+
 > See the [official Cursor docs](https://docs.cursor.com/context/model-context-protocol#manual-configuration) for more information on installing and using MCP servers.
 
 To add Sensei to your Cursor IDE:
@@ -37,7 +39,9 @@ Once initialised, the menu should look like this:
 
 <img width="647" alt="Screenshot 2025-06-12 at 6 04 39 PM" src="https://github.com/user-attachments/assets/4c42ad84-39ce-49a3-bb92-bf3573693e8b" />
 
-Once installed, Cursor Agent will automatically query Sensei when appropriate.
+### Use
+
+Once installed, Cursor Agent will **automatically query Sensei** when appropriate.
 Follow these best practices for optimal results:
 
 1. **Always mention the specialized tools**: Explicitly ask the agent to use Sensei's specialized tools (e.g., "Please use the dojo_model tool to help me create a model").
