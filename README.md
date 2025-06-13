@@ -39,6 +39,8 @@ Once initialised, the menu should look like this:
 
 <img width="647" alt="Screenshot 2025-06-12 at 6 04 39 PM" src="https://github.com/user-attachments/assets/4c42ad84-39ce-49a3-bb92-bf3573693e8b" />
 
+> Note: you may need to install the server manually by running `npx github:dojoengine/sensei-mcp` in your terminal before Cursor will pick it up.
+
 ### Use
 
 Once installed, Cursor Agent will **automatically query Sensei** when appropriate.
