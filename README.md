@@ -65,9 +65,17 @@ I'm building a Dojo game. First, please use the dojo_101 tool to help me set up 
 After that, I'll need help creating the models using the dojo_model tool.
 ```
 
-### Running Directly
+## Using with Claude Code
 
-You can also run Sensei MCP directly:
+To add Sensei MCP to Claude Code, run the following command:
+
+```bash
+claude mcp add sensei-mcp npx github:dojoengine/sensei-mcp
+```
+
+## Running Directly
+
+You can also run Sensei MCP directly in the terminal:
 
 ```bash
 npx github:dojoengine/sensei-mcp
