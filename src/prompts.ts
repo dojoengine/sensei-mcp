@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
+import { z, ZodRawShape } from 'zod';
 import Logger from './logger.js';
 import { loadFile } from './resources.js';
 import {
@@ -143,9 +143,7 @@ export function extractVariables(content: string): string[] {
 /**
  * Generate input schema based on variables in the prompt
  */
-export function generateInputSchema(
-  variables: string[],
-): z.ZodObject<Record<string, z.ZodTypeAny>> {
+export function generateInputSchema(variables: string[]): ZodRawShape {
   const schemaObj: Record<string, z.ZodTypeAny> = {};
 
   // Add all other variables
@@ -153,7 +151,15 @@ export function generateInputSchema(
     schemaObj[variable] = z.string().optional();
   }
 
-  return z.object(schemaObj);
+  // Add a dummy parameter to ensure the schema is not empty
+  if (Object.keys(schemaObj).length === 0) {
+    schemaObj._ = z
+      .string()
+      .optional()
+      .describe('Dummy parameter for no-parameter tools');
+  }
+
+  return schemaObj;
 }
 
 /**
@@ -406,15 +412,7 @@ export function registerPrompt(
     });
 
     // Create a schema object directly (MCP expects ZodRawShape, not ZodObject)
-    const schemaObj: Record<string, z.ZodTypeAny> = {};
-    for (const variable of variables) {
-      schemaObj[variable] = z.string().optional();
-    }
-
-    // Add a dummy parameter to ensure the schema is not empty
-    if (Object.keys(schemaObj).length === 0) {
-      schemaObj._ = z.string().optional().describe('Dummy parameter for no-parameter tools');
-    }
+    const schemaObj = generateInputSchema(variables);
 
     // Create tool handler that replaces variables and returns the result
     const toolHandler = async (
@@ -475,7 +473,12 @@ export function registerPrompt(
     // Register the tool
     if (metadata.description) {
       // With description
-      server.tool(toolName, metadata.description, schemaObj, toolHandler);
+      server.tool(
+        toolName,
+        metadata.description,
+        schemaObj as ZodRawShape,
+        toolHandler,
+      );
     } else {
       // Without description
       server.tool(toolName, schemaObj, toolHandler);
