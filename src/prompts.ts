@@ -405,10 +405,15 @@ export function registerPrompt(
       variables,
     });
 
-    // Create a schema object directly
+    // Create a schema object directly (MCP expects ZodRawShape, not ZodObject)
     const schemaObj: Record<string, z.ZodTypeAny> = {};
     for (const variable of variables) {
       schemaObj[variable] = z.string().optional();
+    }
+
+    // Add a dummy parameter to ensure the schema is not empty
+    if (Object.keys(schemaObj).length === 0) {
+      schemaObj._ = z.string().optional().describe('Dummy parameter for no-parameter tools');
     }
 
     // Create tool handler that replaces variables and returns the result
@@ -478,7 +483,7 @@ export function registerPrompt(
 
     Logger.info(`Registered prompt as tool`, {
       name: toolName,
-      variables: variables.length > 0 ? variables : ['input'],
+      variables,
     });
   }
 }
@@ -566,7 +571,7 @@ export async function loadPrompts(
             ? metadata.description.substring(0, 50) + '...'
             : 'None',
           isTool: metadata.registerAsTool,
-          variables: variables.length > 0 ? variables : ['input'],
+          variables,
         });
 
         promptSpan.end('success');
